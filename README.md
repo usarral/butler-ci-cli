@@ -372,6 +372,7 @@ Want to contribute? Great! Check out our [Contributing Guide](CONTRIBUTING.md) f
 - **[Contributing](CONTRIBUTING.md)** - Contribution guide
 - **[Changelog](CHANGELOG.md)** - Change history
 - **[Publishing](docs/PUBLISHING.md)** - Publishing guide
+- **[Automated Releases](docs/AUTOMATED_RELEASES.md)** - Automated release workflow guide
 
 ## 📝 License
 

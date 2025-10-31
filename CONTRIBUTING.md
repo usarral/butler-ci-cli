@@ -293,10 +293,12 @@ try {
 
 We follow the [Conventional Commits](https://www.conventionalcommits.org/) convention:
 
+**Important**: Commit messages are used by our automated release system to determine version bumps. Please use conventional commit format for all commits to master.
+
 ### Format
 
 ```
-<type>(<scope>): <short description>
+<type>[optional scope][!]: <short description>
 
 [optional body]
 
@@ -305,31 +307,50 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) conve
 
 ### Types
 
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Formatting changes (no code effect)
-- `refactor`: Code refactoring
-- `test`: Add or modify tests
-- `chore`: Maintenance tasks
+- `feat`: New feature (triggers minor version bump)
+- `fix`: Bug fix (triggers patch version bump)
+- `docs`: Documentation changes (triggers patch version bump)
+- `style`: Formatting changes (triggers patch version bump)
+- `refactor`: Code refactoring (triggers patch version bump)
+- `test`: Add or modify tests (triggers patch version bump)
+- `chore`: Maintenance tasks (triggers patch version bump)
+- `feat!` or `BREAKING CHANGE`: Breaking changes (triggers major version bump)
+
+### Version Bumping
+
+The automated release system determines version bumps based on commit messages:
+
+- **Major** (x.0.0): `feat!:`, `fix!:`, or commits with `BREAKING CHANGE` footer
+- **Minor** (x.y.0): `feat:` or `feat(scope):`
+- **Patch** (x.y.z): `fix:`, `chore:`, `docs:`, `style:`, `refactor:`, `perf:`, `test:`
+
+See [Automated Releases](docs/AUTOMATED_RELEASES.md) for more details.
 
 ### Examples
 
 ```bash
-# New feature
+# New feature (minor bump: 3.0.0 → 3.1.0)
 git commit -m "feat(commands): add metrics viewing command"
 
-# Bug fix
+# Bug fix (patch bump: 3.0.0 → 3.0.1)
 git commit -m "fix(jenkins): fix parameter encoding in URLs"
 
-# Documentation
+# Documentation (patch bump: 3.0.0 → 3.0.1)
 git commit -m "docs(readme): update usage examples"
 
-# Refactoring
+# Refactoring (patch bump: 3.0.0 → 3.0.1)
 git commit -m "refactor(config): simplify validation logic"
 
-# Tests
+# Tests (patch bump: 3.0.0 → 3.0.1)
 git commit -m "test(jenkins): add tests for jenkinsClient"
+
+# Breaking change (major bump: 3.0.0 → 4.0.0)
+git commit -m "feat!: redesign CLI interface"
+
+# Breaking change with footer (major bump: 3.0.0 → 4.0.0)
+git commit -m "feat: change config format
+
+BREAKING CHANGE: config format changed from JSON to YAML"
 ```
 
 ## 🔀 Pull Requests
