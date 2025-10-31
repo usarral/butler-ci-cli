@@ -39,7 +39,7 @@
   ],
   "author": "usarral",
   "license": "MIT",
-  "packageManager": "pnpm@10.15.0",
+  "packageManager": "pnpm@10.20.0",
   "devDependencies": {
     "@types/inquirer": "^9.0.9",
     "@types/node": "^24.6.2",
