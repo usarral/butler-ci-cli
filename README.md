@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/butler-ci-cli.svg)](https://www.npmjs.com/package/butler-ci-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D16-brightgreen.svg)](https://nodejs.org/)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
 🤖 A command-line tool to interact with Jenkins Pipelines in a simple and efficient way.
