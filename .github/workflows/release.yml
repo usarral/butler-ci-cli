@@ -72,7 +72,8 @@ jobs:
           echo "Current version: $CURRENT_VERSION"
           
           # Determine bump type based on conventional commits
-          if echo "$COMMIT_MSG" | grep -qiE '^(feat!|fix!|chore!|breaking|BREAKING CHANGE)'; then
+          # Check for breaking changes (exclamation mark or BREAKING CHANGE footer)
+          if echo "$COMMIT_MSG" | grep -qiE '^[a-z]+(\(.*\))?!:' || echo "$COMMIT_MSG" | grep -qiE 'BREAKING CHANGE:'; then
             BUMP_TYPE="major"
           elif echo "$COMMIT_MSG" | grep -qiE '^feat(\(.*\))?:'; then
             BUMP_TYPE="minor"
@@ -85,6 +86,7 @@ jobs:
           
           echo "Bump type: $BUMP_TYPE"
           echo "bump_type=$BUMP_TYPE" >> "$GITHUB_OUTPUT"
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
           
           # Calculate new version
           IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
