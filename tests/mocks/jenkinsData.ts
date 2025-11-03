@@ -430,3 +430,91 @@ export const mockBuildsListResponse = {
     },
   ],
 };
+
+export const mockDetailedBuildInfoResponse = {
+  _class: 'hudson.model.FreeStyleBuild',
+  number: 42,
+  url: 'http://localhost:8080/job/test-job-1/42/',
+  displayName: '#42',
+  fullDisplayName: 'test-job-1 #42',
+  description: 'Build for production deployment',
+  building: false,
+  duration: 45620,
+  estimatedDuration: 43000,
+  executor: null,
+  result: 'SUCCESS',
+  timestamp: 1698768000000,
+  builtOn: '',
+  id: '42',
+  keepLog: false,
+  queueId: 156,
+  artifacts: [
+    {
+      displayPath: 'app-1.0.0.jar',
+      fileName: 'app-1.0.0.jar',
+      relativePath: 'target/app-1.0.0.jar',
+    },
+    {
+      displayPath: 'reports/test-results.xml',
+      fileName: 'test-results.xml',
+      relativePath: 'target/reports/test-results.xml',
+    },
+  ],
+  changeSets: [
+    {
+      _class: 'hudson.plugins.git.GitChangeSetList',
+      items: [
+        {
+          _class: 'hudson.plugins.git.GitChangeSet',
+          author: {
+            fullName: 'John Doe',
+          },
+          authorEmail: 'john.doe@example.com',
+          commitId: 'abc123def456',
+          msg: 'Fix critical security vulnerability\n\nUpdated dependencies and fixed SQL injection',
+          timestamp: 1698767000000,
+        },
+        {
+          _class: 'hudson.plugins.git.GitChangeSet',
+          author: {
+            fullName: 'Jane Smith',
+          },
+          authorEmail: 'jane.smith@example.com',
+          commitId: 'def789ghi012',
+          msg: 'Add new feature for user authentication',
+          timestamp: 1698766000000,
+        },
+      ],
+      kind: 'git',
+    },
+  ],
+  culprits: [],
+  actions: [
+    {
+      _class: 'hudson.model.ParametersAction',
+      parameters: [
+        {
+          _class: 'hudson.model.StringParameterValue',
+          name: 'ENVIRONMENT',
+          value: 'production',
+        },
+        {
+          _class: 'hudson.model.BooleanParameterValue',
+          name: 'RUN_TESTS',
+          value: true,
+        },
+      ],
+    },
+    {
+      _class: 'hudson.model.CauseAction',
+      causes: [
+        {
+          _class: 'hudson.model.Cause$UserIdCause',
+          shortDescription: 'Started by user admin',
+          userId: 'admin',
+          userName: 'Administrator',
+        },
+      ],
+    },
+  ],
+};

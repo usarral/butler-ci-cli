@@ -67,6 +67,7 @@ export const messages = {
   labels: {
     jobInfo: 'Información del Job:',
     buildInfo: 'Información del Último Build:',
+    buildInfoDetailed: 'Información Detallada del Build:',
     jobParams: 'Parámetros del Job:',
     buildLogs: (build: number) => `Logs del Build #${build}`,
     preferences: 'Preferencias actuales:',

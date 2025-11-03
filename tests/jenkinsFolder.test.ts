@@ -6,6 +6,7 @@ import {
   getAllJobsRecursive,
   getJobInfo,
   getLastBuild,
+  getBuildInfo,
   findJobsByName,
   getJobParameters,
   getBuildLogs,
@@ -20,6 +21,7 @@ import {
   mockConsoleLogOutput,
   mockJobWithoutParams,
   mockBuildsListResponse,
+  mockDetailedBuildInfoResponse,
 } from './mocks/jenkinsData';
 
 describe('Jenkins Folder Operations', () => {
@@ -58,12 +60,14 @@ describe('Jenkins Folder Operations', () => {
     mockAxios.onGet('/job/simple-job/api/json').reply(200, mockJobWithoutParams);
     mockAxios.onGet('/job/test-job-1/42/consoleText').reply(200, mockConsoleLogOutput);
     mockAxios.onGet('/job/test-job-1/latest/consoleText').reply(200, mockConsoleLogOutput);
+    mockAxios.onGet('/job/test-job-1/42/api/json').reply(200, mockDetailedBuildInfoResponse);
     
     // Mocks para errores 404
     mockAxios.onGet('/job/nonexistent/api/json').reply(404);
     mockAxios.onGet(/\/job\/nonexistent\/api\/json\?/).reply(404);
     mockAxios.onGet('/job/nonexistent-job/lastBuild/api/json').reply(404);
     mockAxios.onGet('/job/test-job-1/999/consoleText').reply(404);
+    mockAxios.onGet('/job/test-job-1/43/api/json').reply(404);
   });
 
   afterEach(() => {
@@ -303,6 +307,55 @@ describe('Jenkins Folder Operations', () => {
       mockAxios.onGet(/\/job\/nonexistent\/api\.json.*/).reply(404);
 
       await expect(getBuilds('nonexistent')).rejects.toThrow();
+    });
+  });
+
+  describe('getBuildInfo', () => {
+    it('should fetch detailed build information', async () => {
+      const buildInfo = await getBuildInfo('test-job-1', 42);
+
+      expect(buildInfo.number).toBe(42);
+      expect(buildInfo.result).toBe('SUCCESS');
+      expect(buildInfo.artifacts).toBeDefined();
+      expect(buildInfo.artifacts?.length).toBe(2);
+      expect(buildInfo.changeSets).toBeDefined();
+      expect(buildInfo.changeSets?.length).toBe(1);
+    });
+
+    it('should fetch build info with string build number', async () => {
+      const buildInfo = await getBuildInfo('test-job-1', '42');
+
+      expect(buildInfo.number).toBe(42);
+      expect(buildInfo.result).toBe('SUCCESS');
+    });
+
+    it('should include artifacts in detailed build info', async () => {
+      const buildInfo = await getBuildInfo('test-job-1', 42);
+
+      expect(buildInfo.artifacts).toBeDefined();
+      expect(buildInfo.artifacts?.[0].fileName).toBe('app-1.0.0.jar');
+      expect(buildInfo.artifacts?.[1].fileName).toBe('test-results.xml');
+    });
+
+    it('should include changesets in detailed build info', async () => {
+      const buildInfo = await getBuildInfo('test-job-1', 42);
+
+      expect(buildInfo.changeSets).toBeDefined();
+      const changes = buildInfo.changeSets?.[0].items;
+      expect(changes?.length).toBe(2);
+      expect(changes?.[0].author?.fullName).toBe('John Doe');
+      expect(changes?.[1].author?.fullName).toBe('Jane Smith');
+    });
+
+    it('should throw error for non-existent build', async () => {
+      await expect(getBuildInfo('test-job-1', 43)).rejects.toThrow(/Error obteniendo información del build #43/);
+    });
+
+    it('should handle build number as string or number', async () => {
+      const buildInfoNumber = await getBuildInfo('test-job-1', 42);
+      const buildInfoString = await getBuildInfo('test-job-1', '42');
+
+      expect(buildInfoNumber.number).toBe(buildInfoString.number);
     });
   });
 });

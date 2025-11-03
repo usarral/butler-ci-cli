@@ -11,6 +11,7 @@ import { jobParams } from "./commands/jobParams";
 import { build } from "./commands/build";
 import { showLogs } from "./commands/logs";
 import { listBuilds } from "./commands/listBuilds";
+import { buildInfo } from "./commands/buildInfo";
 import { setupConfigCommands } from "./commands/config";
 
 const program = new Command();
@@ -98,5 +99,12 @@ program
   .option("--order <order>", "Orden de clasificación (asc, desc)", "desc")
   .description("Listar builds de un job con opciones de filtrado y paginación")
   .action(listBuilds);
+
+program
+  .command("build-info")
+  .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
+  .argument("[buildNumber]", "Número del build (si no se proporciona, se mostrará una selección interactiva)")
+  .description("Obtener información detallada de un build específico")
+  .action(buildInfo);
 
 program.parse();

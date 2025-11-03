@@ -41,6 +41,21 @@ export interface BuildInfo {
   description?: string | null;
 }
 
+export interface DetailedBuildInfo extends BuildInfo {
+  estimatedDuration?: number;
+  executor?: any;
+  actions?: any[];
+  artifacts?: Array<{
+    displayPath: string;
+    fileName: string;
+    relativePath: string;
+  }>;
+  changeSets?: any[];
+  culprits?: any[];
+  id?: string;
+  queueId?: number;
+}
+
 /**
  * Obtiene todos los items (jobs y carpetas) de forma recursiva
  */
@@ -136,6 +151,25 @@ export async function getLastBuild(jobFullName: string): Promise<any> {
     return response.data;
   } catch (error: any) {
     throw new Error(`Error obteniendo último build del job ${jobFullName}: ${error.message}`);
+  }
+}
+
+/**
+ * Obtiene información detallada de un build específico
+ */
+export async function getBuildInfo(
+  jobFullName: string,
+  buildNumber: number | string
+): Promise<DetailedBuildInfo> {
+  const jenkins = getJenkinsClient();
+  
+  try {
+    const jobPath = jobFullName.replace(/\//g, '/job/');
+    const endpoint = `/job/${jobPath}/${buildNumber}/api/json`;
+    const response = await jenkins.get(endpoint);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(`Error obteniendo información del build #${buildNumber} del job ${jobFullName}: ${error.message}`);
   }
 }
 
