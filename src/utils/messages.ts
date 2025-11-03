@@ -21,6 +21,9 @@ export const messages = {
     permissionDenied: 'Error de permisos al descargar.',
     openingEditor: 'Error abriendo editor',
     generic: 'Error',
+    abortError: (build: number | string, job: string, error: string) => 
+      `Error abortando build #${build} del job ${job}: ${error}`,
+    buildNotRunning: (build: number) => `El build #${build} no está en ejecución y no puede ser abortado`,
   },
 
   // Sugerencias
@@ -40,6 +43,7 @@ export const messages = {
     jobsFetched: (count: number) => `${count} jobs guardados para sugerencias futuras.`,
     buildStarted: 'Build iniciado correctamente',
     logsDownloaded: 'Logs descargados exitosamente!',
+    buildAborted: (build: number, job: string) => `Build #${build} del job "${job}" abortado exitosamente`,
     editorOpened: 'Editor abierto.',
   },
 
@@ -59,6 +63,8 @@ export const messages = {
     openingInEditor: (editor: string) => `Abriendo logs en ${editor}`,
     usingDefaultEditor: (editor: string) => `💡 Usando editor: ${editor} (no configurado, usando por defecto)`,
     noEditorConfigured: '⚠️  No se encontró un editor configurado.',
+    abortingBuild: (build: string, job: string) => `Abortando build #${build} del job: ${job}`,
+    checkingBuildStatus: 'Verificando estado del build...',
     configureEditorHint: '💡 Configura uno con: butler-ci-cli config edit <nombre> --editor <editor>',
     editingActiveConfig: (name: string) => `Editando configuración activa: ${name}`,
   },
@@ -105,6 +111,7 @@ export const messages = {
   // Prompts y preguntas
   prompts: {
     confirmBuild: '¿Confirmas que quieres ejecutar este build?',
+    confirmAbort: (build: string, job: string) => `¿Estás seguro que quieres abortar el build #${build} del job "${job}"?`,
     confirmDelete: (name: string) => `¿Estás seguro que quieres eliminar la configuración "${name}"?`,
     selectConfigToDelete: 'Selecciona la configuración a eliminar:',
     configName: 'Nombre de la configuración:',
@@ -167,6 +174,8 @@ export const messages = {
     noParams: 'Este job no tiene parámetros configurados.',
     noJobsFound: 'No se encontraron jobs.',
     buildCancelled: 'Build cancelado.',
+    abortCancelled: 'Abortar cancelado.',
+    buildAlreadyCompleted: (build: number, result: string) => `El build #${build} ya está completado con resultado: ${result}`,
   },
 
   // Separadores y formato
@@ -194,6 +203,8 @@ export const messages = {
     user: '👤',
     location: '📍',
     description: '📝',
+    abort: '🛑',
+    stop: '⏹️',
     check: '✓',
     cross: '✗',
     bullet: '•',

@@ -451,3 +451,55 @@ export async function getBuilds(
     throw new Error(`Error obteniendo builds del job ${jobFullName}: ${error.message}`);
   }
 }
+
+/**
+ * Aborta un build en ejecución o en cola
+ */
+export async function abortBuild(
+  jobFullName: string,
+  buildNumber: number | string
+): Promise<{ success: boolean; message: string }> {
+  const jenkins = getJenkinsClient();
+  
+  try {
+    const jobPath = jobFullName.replace(/\//g, '/job/');
+    
+    // Primero, verificar que el build existe y está en un estado que puede ser abortado
+    let actualBuildNumber = buildNumber;
+    
+    if (buildNumber === 'latest' || buildNumber === 'lastBuild') {
+      const lastBuildResponse = await jenkins.get(`/job/${jobPath}/lastBuild/api/json`);
+      actualBuildNumber = lastBuildResponse.data.number;
+    }
+    
+    // Obtener información del build antes de abortar
+    const buildInfoResponse = await jenkins.get(`/job/${jobPath}/${actualBuildNumber}/api/json`);
+    const buildInfo = buildInfoResponse.data;
+    
+    // Verificar si el build está en un estado que puede ser abortado
+    if (!buildInfo.building && buildInfo.result) {
+      return {
+        success: false,
+        message: `El build #${actualBuildNumber} ya está completado con resultado: ${buildInfo.result}`
+      };
+    }
+    
+    // Endpoint para abortar: POST /job/{name}/{buildNumber}/stop
+    const endpoint = `/job/${jobPath}/${actualBuildNumber}/stop`;
+    
+    await jenkins.post(endpoint);
+    
+    return {
+      success: true,
+      message: `Build #${actualBuildNumber} del job "${jobFullName}" abortado exitosamente`
+    };
+  } catch (error: any) {
+    // Si es un error 404, el build no existe
+    if (error.response?.status === 404) {
+      throw new Error(`Build #${buildNumber} no encontrado para el job ${jobFullName}`);
+    }
+    
+    // Para otros errores, lanzar un mensaje descriptivo
+    throw new Error(`Error abortando build #${buildNumber} del job ${jobFullName}: ${error.message}`);
+  }
+}
