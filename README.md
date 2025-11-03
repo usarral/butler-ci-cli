@@ -24,6 +24,7 @@ Butler CI CLI is a terminal application that allows you to manage and monitor Je
 - 🎨 Colorful and user-friendly terminal interface
 - 📋 Query required parameters for jobs
 - 🚀 Execute builds in an assisted manner (interactive or with CLI parameters)
+- 🛑 Abort running or stuck builds reliably
 - 📄 View and download build logs
 - ✏️ Open logs in configurable editors
 - ⚙️ Customizable preferences system (editor, log viewer, directory)
@@ -296,6 +297,24 @@ butler-ci-cli list-builds my-job --sort-by number --order desc
 butler-ci-cli list-builds my-job --status SUCCESS --since 2024-01-01 --limit 20
 ```
 
+#### `abort <jobName> <buildNumber>`
+Aborts a running or queued build. Useful for terminating stuck or unresponsive jobs.
+
+```bash
+# Abort a specific build
+butler-ci-cli abort my-job 42
+
+# Abort the latest build
+butler-ci-cli abort my-job latest
+
+# Force abort without confirmation
+butler-ci-cli abort my-job 42 --force
+butler-ci-cli abort my-job latest -f
+
+# Abort jobs in folders
+butler-ci-cli abort backend/api-service 15
+```
+
 ### Example Workflow
 
 ```bash
@@ -329,6 +348,10 @@ butler-ci-cli logs my-job 42            # View logs in terminal
 butler-ci-cli logs my-job latest        # View latest build logs
 butler-ci-cli logs my-job 42 -d         # Download logs
 butler-ci-cli logs my-job latest -e     # Open latest build in editor
+
+# Abort stuck or running builds
+butler-ci-cli abort my-job 42           # Abort a specific build
+butler-ci-cli abort my-job latest -f    # Force abort latest build
 ```
 
 ## 🗂️ Project Structure
