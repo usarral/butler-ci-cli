@@ -16,6 +16,7 @@ Butler CI CLI is a terminal application that allows you to manage and monitor Je
 - 📋 List all available jobs in Jenkins (including folders and subfolders)
 - 🔍 Get detailed information about a specific job (supports folder paths)
 - 🔄 Query the last build of a job
+- 📊 List builds with filtering (by status, date range), pagination, and sorting
 - 💾 Save job list locally for future references
 - 🗂️ Navigate through Jenkins folder structure
 - 🔍 Search jobs by name across the entire structure
@@ -267,6 +268,34 @@ butler-ci-cli logs my-job latest -e
 butler-ci-cli logs my-job 42 --download --output /tmp/build.log
 ```
 
+#### `list-builds <jobName>`
+Lists all builds for a specified job with support for filtering, pagination, and sorting.
+
+```bash
+# List all builds (default: 50 most recent)
+butler-ci-cli list-builds my-pipeline-job
+
+# Filter by status
+butler-ci-cli list-builds my-job --status SUCCESS
+butler-ci-cli list-builds my-job --status FAILURE
+butler-ci-cli list-builds my-job --status RUNNING
+
+# Filter by date range
+butler-ci-cli list-builds my-job --since 2024-01-01
+butler-ci-cli list-builds my-job --since 2024-01-01 --until 2024-12-31
+
+# Pagination
+butler-ci-cli list-builds my-job --limit 10
+butler-ci-cli list-builds my-job --offset 20 --limit 10
+
+# Sorting
+butler-ci-cli list-builds my-job --sort-by timestamp --order asc
+butler-ci-cli list-builds my-job --sort-by number --order desc
+
+# Combined filters
+butler-ci-cli list-builds my-job --status SUCCESS --since 2024-01-01 --limit 20
+```
+
 ### Example Workflow
 
 ```bash
@@ -290,6 +319,11 @@ butler-ci-cli job-params my-pipeline    # View job parameters
 butler-ci-cli build my-pipeline         # Execute build (interactive mode)
 butler-ci-cli build my-pipeline --params "ENV=prod,VERSION=1.0.0"
 
+# List and filter builds
+butler-ci-cli list-builds my-job              # List recent builds
+butler-ci-cli list-builds my-job --status SUCCESS  # Only successful builds
+butler-ci-cli list-builds my-job --since 2024-01-01 --limit 20
+
 # Work with logs
 butler-ci-cli logs my-job 42            # View logs in terminal
 butler-ci-cli logs my-job latest        # View latest build logs
@@ -307,6 +341,7 @@ butler-ci-cli/
 │   │   ├── fetchJobs.ts    # fetch-jobs command
 │   │   ├── jobInfo.ts      # job-info command
 │   │   ├── build.ts        # build command
+│   │   ├── listBuilds.ts   # list-builds command
 │   │   └── logs.ts         # logs command
 │   ├── utils/              # Utilities
 │   │   ├── config.ts       # Configuration management
