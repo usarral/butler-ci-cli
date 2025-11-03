@@ -98,23 +98,31 @@ function displayBuildsTable(builds: any[]) {
   console.log(formatters.title('Lista de builds:'));
   console.log('');
   
+  // Column widths
+  const COL_NUMBER_WIDTH = 12;
+  const COL_STATUS_WIDTH = 18;
+  const COL_DATE_WIDTH = 20;
+  const COL_DURATION_WIDTH = 12;
+  // ANSI color codes add extra characters that don't display, need to account for them in padding
+  const ANSI_CODE_LENGTH = 9;
+  
   // Encabezados
-  const numberCol = 'Build #'.padEnd(12);
-  const statusCol = 'Estado'.padEnd(18);
-  const dateCol = 'Fecha'.padEnd(20);
-  const durationCol = 'Duración'.padEnd(12);
+  const numberCol = 'Build #'.padEnd(COL_NUMBER_WIDTH);
+  const statusCol = 'Estado'.padEnd(COL_STATUS_WIDTH);
+  const dateCol = 'Fecha'.padEnd(COL_DATE_WIDTH);
+  const durationCol = 'Duración'.padEnd(COL_DURATION_WIDTH);
   
   console.log(formatters.bold(`${numberCol}${statusCol}${dateCol}${durationCol}`));
   console.log('─'.repeat(62));
   
   // Filas
   for (const build of builds) {
-    const number = formatters.buildNumber(`#${build.number}`).padEnd(12 + 9); // +9 for ANSI codes
-    const status = getBuildStatusDisplay(build).padEnd(18 + 9);
-    const date = formatters.date(build.timestamp).padEnd(20 + 9);
+    const number = formatters.buildNumber(`#${build.number}`).padEnd(COL_NUMBER_WIDTH + ANSI_CODE_LENGTH);
+    const status = getBuildStatusDisplay(build).padEnd(COL_STATUS_WIDTH + ANSI_CODE_LENGTH);
+    const date = formatters.date(build.timestamp).padEnd(COL_DATE_WIDTH + ANSI_CODE_LENGTH);
     const duration = build.duration > 0 
-      ? formatters.duration(build.duration).padEnd(12 + 9)
-      : formatters.secondary('En curso').padEnd(12 + 9);
+      ? formatters.duration(build.duration).padEnd(COL_DURATION_WIDTH + ANSI_CODE_LENGTH)
+      : formatters.secondary('En curso').padEnd(COL_DURATION_WIDTH + ANSI_CODE_LENGTH);
     
     console.log(`${number}${status}${date}${duration}`);
   }
