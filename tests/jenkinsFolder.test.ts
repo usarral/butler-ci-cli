@@ -9,6 +9,7 @@ import {
   findJobsByName,
   getJobParameters,
   getBuildLogs,
+  getBuilds,
 } from '../src/utils/jenkinsFolder';
 import * as config from '../src/utils/config';
 import {
@@ -18,6 +19,7 @@ import {
   mockBuildInfoResponse,
   mockConsoleLogOutput,
   mockJobWithoutParams,
+  mockBuildsListResponse,
 } from './mocks/jenkinsData';
 
 describe('Jenkins Folder Operations', () => {
@@ -40,6 +42,10 @@ describe('Jenkins Folder Operations', () => {
     vi.spyOn(config, 'getJenkinsConfig').mockReturnValue(mockConfig);
     
     // Configurar TODOS los mocks necesarios
+    // Mock for builds list API - use regex to match query params (MUST BE BEFORE exact matches)
+    mockAxios.onGet(/\/job\/test-job-1\/api\/json\?/).reply(200, mockBuildsListResponse);
+    mockAxios.onGet(/\/job\/empty-job\/api\/json\?/).reply(200, { ...mockBuildsListResponse, builds: [] });
+    
     mockAxios.onGet('/api/json').reply(200, mockJenkinsRootResponse);
     mockAxios.onGet('/job/backend/api/json').reply(200, mockFolderResponse);
     mockAxios.onGet('/job/test-job-1/api/json').reply(200, mockJobInfoResponse);
@@ -55,6 +61,7 @@ describe('Jenkins Folder Operations', () => {
     
     // Mocks para errores 404
     mockAxios.onGet('/job/nonexistent/api/json').reply(404);
+    mockAxios.onGet(/\/job\/nonexistent\/api\/json\?/).reply(404);
     mockAxios.onGet('/job/nonexistent-job/lastBuild/api/json').reply(404);
     mockAxios.onGet('/job/test-job-1/999/consoleText').reply(404);
   });
@@ -217,6 +224,85 @@ describe('Jenkins Folder Operations', () => {
 
     it('should throw error when build not found', async () => {
       await expect(getBuildLogs('test-job-1', '999')).rejects.toThrow();
+    });
+  });
+
+  describe('getBuilds', () => {
+    it('should fetch builds list without filters', async () => {
+      const builds = await getBuilds('test-job-1');
+
+      expect(builds).toBeDefined();
+      expect(builds.length).toBeGreaterThan(0);
+      expect(builds[0].number).toBe(45); // Most recent by default
+    });
+
+    it('should filter builds by status SUCCESS', async () => {
+      const builds = await getBuilds('test-job-1', { status: 'SUCCESS' });
+
+      expect(builds.every(b => b.result === 'SUCCESS')).toBe(true);
+      expect(builds.length).toBe(3);
+    });
+
+    it('should filter builds by status FAILURE', async () => {
+      const builds = await getBuilds('test-job-1', { status: 'FAILURE' });
+
+      expect(builds.every(b => b.result === 'FAILURE')).toBe(true);
+      expect(builds.length).toBe(1);
+    });
+
+    it('should filter builds by date range', async () => {
+      const startDate = new Date(1698768050000);
+      const builds = await getBuilds('test-job-1', { startDate });
+
+      expect(builds.every(b => b.timestamp >= startDate.getTime())).toBe(true);
+    });
+
+    it('should apply pagination with limit', async () => {
+      const builds = await getBuilds('test-job-1', { limit: 3 });
+
+      expect(builds.length).toBe(3);
+    });
+
+    it('should apply pagination with offset', async () => {
+      const builds = await getBuilds('test-job-1', { offset: 2, limit: 2 });
+
+      expect(builds.length).toBe(2);
+      expect(builds[0].number).toBe(43); // Skip first 2 (45, 44)
+    });
+
+    it('should sort builds by number ascending', async () => {
+      const builds = await getBuilds('test-job-1', { sortBy: 'number', sortOrder: 'asc' });
+
+      expect(builds[0].number).toBe(40);
+      expect(builds[builds.length - 1].number).toBe(45);
+    });
+
+    it('should sort builds by timestamp descending', async () => {
+      const builds = await getBuilds('test-job-1', { sortBy: 'timestamp', sortOrder: 'desc' });
+
+      expect(builds[0].timestamp).toBeGreaterThan(builds[builds.length - 1].timestamp);
+    });
+
+    it('should apply default limit of 50', async () => {
+      const builds = await getBuilds('test-job-1');
+
+      // All 6 builds returned since they're less than 50
+      expect(builds.length).toBe(6);
+    });
+
+    it('should handle job with no builds', async () => {
+      const emptyResponse = { ...mockBuildsListResponse, builds: [] };
+      mockAxios.onGet(/\/job\/empty-job\/api\.json.*/).reply(200, emptyResponse);
+
+      const builds = await getBuilds('empty-job');
+
+      expect(builds).toEqual([]);
+    });
+
+    it('should throw error for non-existent job', async () => {
+      mockAxios.onGet(/\/job\/nonexistent\/api\.json.*/).reply(404);
+
+      await expect(getBuilds('nonexistent')).rejects.toThrow();
     });
   });
 });
