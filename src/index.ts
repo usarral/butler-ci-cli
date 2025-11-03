@@ -10,6 +10,7 @@ import { showFolders } from "./commands/showFolders";
 import { jobParams } from "./commands/jobParams";
 import { build } from "./commands/build";
 import { showLogs } from "./commands/logs";
+import { listBuilds } from "./commands/listBuilds";
 import { setupConfigCommands } from "./commands/config";
 
 const program = new Command();
@@ -83,5 +84,19 @@ program
   .option("-o, --output <path>", "Ruta de salida para el archivo de logs")
   .description("Ver logs de un build específico")
   .action(showLogs);
+
+program
+  .command("list-builds")
+  .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
+  .option("--status <status>", "Filtrar por estado (SUCCESS, FAILURE, UNSTABLE, ABORTED, RUNNING)")
+  .option("--branch <branch>", "Filtrar por rama")
+  .option("--since <date>", "Filtrar builds desde esta fecha (ISO 8601)")
+  .option("--until <date>", "Filtrar builds hasta esta fecha (ISO 8601)")
+  .option("--offset <number>", "Número de builds a omitir", parseInt)
+  .option("--limit <number>", "Número máximo de builds a mostrar", parseInt, 50)
+  .option("--sort-by <field>", "Campo por el que ordenar (number, timestamp)", "number")
+  .option("--order <order>", "Orden de clasificación (asc, desc)", "desc")
+  .description("Listar builds de un job con opciones de filtrado y paginación")
+  .action(listBuilds);
 
 program.parse();
