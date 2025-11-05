@@ -397,8 +397,6 @@ describe('Jenkins Folder Operations', () => {
     });
 
     it('should throw error for non-existent build', async () => {
-      mockAxios.onGet(/\/job\/test-job-1\/999\/api\/json\?tree=/).reply(404);
-
       await expect(getBuildInfo('test-job-1', '999')).rejects.toThrow();
     });
   });
