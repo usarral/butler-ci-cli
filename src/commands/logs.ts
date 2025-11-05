@@ -98,11 +98,15 @@ async function streamLogs(
   let lastStatus = '';
   
   // Manejar Ctrl+C para salir limpiamente
-  process.on('SIGINT', () => {
+  const sigintHandler = () => {
     console.log('\n');
     logger.info(formatters.info(`${msg.icons.info} Streaming detenido por el usuario`));
     process.exit(0);
-  });
+  };
+  
+  // Remover handlers existentes y añadir el nuevo
+  process.removeAllListeners('SIGINT');
+  process.on('SIGINT', sigintHandler);
   
   // Mostrar encabezado
   printSeparator();
@@ -111,57 +115,62 @@ async function streamLogs(
   printSeparator();
   console.log();
   
-  while (isRunning) {
-    try {
-      // Obtener logs progresivos
-      const result = await getProgressiveBuildLogs(jobName, buildNumber, start);
-      
-      // Mostrar nuevos logs si los hay
-      if (result.text && result.text.length > 0) {
-        process.stdout.write(result.text);
-      }
-      
-      // Actualizar la posición para la próxima lectura
-      start = result.size;
-      
-      // Verificar el estado del build
-      const buildInfo = await getBuildInfo(jobName, buildNumber);
-      
-      // Si el build terminó y no hay más datos
-      if (!buildInfo.building && !result.hasMore) {
-        isRunning = false;
-        console.log();
-        printSeparator();
+  try {
+    while (isRunning) {
+      try {
+        // Obtener logs progresivos
+        const result = await getProgressiveBuildLogs(jobName, buildNumber, start);
         
-        const statusIcon = buildInfo.result === 'SUCCESS' ? msg.icons.success : 
-                          buildInfo.result === 'FAILURE' ? msg.icons.error : 
-                          msg.icons.info;
-        const statusColor = buildInfo.result === 'SUCCESS' ? formatters.success : 
-                           buildInfo.result === 'FAILURE' ? formatters.error : 
-                           formatters.info;
-        
-        console.log(statusColor(`${statusIcon} Build completado con estado: ${buildInfo.result}`));
-        printSeparator();
-        break;
-      }
-      
-      // Mostrar estado si cambió
-      const currentStatus = buildInfo.building ? 'RUNNING' : (buildInfo.result || 'UNKNOWN');
-      if (currentStatus !== lastStatus) {
-        if (lastStatus !== '') {
-          console.log();
-          console.log(formatters.dim(`Estado: ${currentStatus}`));
+        // Mostrar nuevos logs si los hay
+        if (result.text && result.text.length > 0) {
+          process.stdout.write(result.text);
         }
-        lastStatus = currentStatus;
+        
+        // Actualizar la posición para la próxima lectura
+        start = result.size;
+        
+        // Verificar el estado del build
+        const buildInfo = await getBuildInfo(jobName, buildNumber);
+        
+        // Si el build terminó y no hay más datos
+        if (!buildInfo.building && !result.hasMore) {
+          isRunning = false;
+          console.log();
+          printSeparator();
+          
+          const statusIcon = buildInfo.result === 'SUCCESS' ? msg.icons.success : 
+                            buildInfo.result === 'FAILURE' ? msg.icons.error : 
+                            msg.icons.info;
+          const statusColor = buildInfo.result === 'SUCCESS' ? formatters.success : 
+                             buildInfo.result === 'FAILURE' ? formatters.error : 
+                             formatters.info;
+          
+          console.log(statusColor(`${statusIcon} Build completado con estado: ${buildInfo.result}`));
+          printSeparator();
+          break;
+        }
+        
+        // Mostrar estado si cambió
+        const currentStatus = buildInfo.building ? 'RUNNING' : (buildInfo.result || 'UNKNOWN');
+        if (currentStatus !== lastStatus) {
+          if (lastStatus !== '') {
+            console.log();
+            console.log(formatters.dim(`Estado: ${currentStatus}`));
+          }
+          lastStatus = currentStatus;
+        }
+        
+        // Esperar antes de la próxima actualización
+        await new Promise(resolve => setTimeout(resolve, intervalSeconds * 1000));
+        
+      } catch (error: any) {
+        logger.error(`${msg.icons.error} Error en streaming: ${error.message}`);
+        isRunning = false;
       }
-      
-      // Esperar antes de la próxima actualización
-      await new Promise(resolve => setTimeout(resolve, intervalSeconds * 1000));
-      
-    } catch (error: any) {
-      logger.error(`${msg.icons.error} Error en streaming: ${error.message}`);
-      isRunning = false;
     }
+  } finally {
+    // Limpiar el handler al salir
+    process.removeListener('SIGINT', sigintHandler);
   }
 }
 
