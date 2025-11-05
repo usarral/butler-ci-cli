@@ -140,6 +140,24 @@ export async function getLastBuild(jobFullName: string): Promise<any> {
 }
 
 /**
+ * Obtiene información básica de un build específico
+ */
+export async function getBuildInfo(
+  jobFullName: string,
+  buildNumber: number | string
+): Promise<BuildInfo> {
+  const jenkins = getJenkinsClient();
+  
+  try {
+    const jobPath = jobFullName.replace(/\//g, '/job/');
+    const response = await jenkins.get(`/job/${jobPath}/${buildNumber}/api/json?tree=number,url,result,timestamp,duration,building,displayName,fullDisplayName,description`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(`Error obteniendo información del build #${buildNumber} del job ${jobFullName}: ${error.message}`);
+  }
+}
+
+/**
  * Determina si un item es una carpeta basándose en su clase
  */
 function isFolder(itemClass: string): boolean {
@@ -332,6 +350,52 @@ export async function getBuildLogs(
     return response.data;
   } catch (error: any) {
     throw new Error(`Error obteniendo logs del build #${buildNumber} del job ${jobFullName}: ${error.message}`);
+  }
+}
+
+/**
+ * Interfaz para el resultado de logs progresivos
+ */
+export interface ProgressiveLogResult {
+  text: string;
+  hasMore: boolean;
+  size: number;
+}
+
+/**
+ * Obtiene los logs de un build de forma progresiva (streaming)
+ * Usa el endpoint logText/progressiveText para obtener solo los nuevos logs
+ */
+export async function getProgressiveBuildLogs(
+  jobFullName: string,
+  buildNumber: number | string,
+  start: number = 0
+): Promise<ProgressiveLogResult> {
+  const jenkins = getJenkinsClient();
+  
+  try {
+    const jobPath = jobFullName.replace(/\//g, '/job/');
+    const endpoint = `/job/${jobPath}/${buildNumber}/logText/progressiveText?start=${start}`;
+    
+    const response = await jenkins.get(endpoint, {
+      responseType: 'text',
+      headers: {
+        'Accept': 'text/plain'
+      }
+    });
+    
+    // Jenkins devuelve el header X-Text-Size con el tamaño actual del log
+    // y X-More-Data con 'true' si hay más datos disponibles
+    const textSize = parseInt(response.headers['x-text-size'] || '0', 10);
+    const hasMore = response.headers['x-more-data'] === 'true';
+    
+    return {
+      text: response.data || '',
+      hasMore,
+      size: textSize
+    };
+  } catch (error: any) {
+    throw new Error(`Error obteniendo logs progresivos del build #${buildNumber} del job ${jobFullName}: ${error.message}`);
   }
 }
 
