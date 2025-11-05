@@ -1,4 +1,4 @@
-import { getBuildLogs, downloadBuildLogs, getJobInfo } from "../utils/jenkinsFolder";
+import { getBuildLogs, downloadBuildLogs, getJobInfo, getProgressiveBuildLogs, getBuildInfo } from "../utils/jenkinsFolder";
 import { getJenkinsConfig } from "../utils/config";
 import { logger } from "../utils/logger";
 import { msg } from "../utils/messages";
@@ -12,7 +12,7 @@ import { existsSync } from "node:fs";
 export async function showLogs(
   jobName: string,
   buildNumber: string,
-  options: { download?: boolean; editor?: boolean; output?: string }
+  options: { download?: boolean; editor?: boolean; output?: string; stream?: boolean; interval?: number }
 ) {
   try {
     // Resolver 'latest' al número de build más reciente
@@ -35,6 +35,12 @@ export async function showLogs(
     // Verificar que el job existe (si no se ha verificado ya)
     if (buildNumber.toLowerCase() !== 'latest') {
       await getJobInfo(jobName);
+    }
+    
+    // Si se solicita streaming, usar la función de streaming
+    if (options.stream) {
+      await streamLogs(jobName, resolvedBuildNumber, options.interval || 5);
+      return;
     }
     
     // Obtener los logs
@@ -76,6 +82,88 @@ export async function showLogs(
   } catch (error: any) {
     logger.error(`${msg.icons.error} ${error.message}`);
     process.exit(1);
+  }
+}
+
+/**
+ * Stream logs de un build en tiempo real
+ */
+async function streamLogs(
+  jobName: string,
+  buildNumber: string,
+  intervalSeconds: number
+): Promise<void> {
+  let start = 0;
+  let isRunning = true;
+  let lastStatus = '';
+  
+  // Manejar Ctrl+C para salir limpiamente
+  process.on('SIGINT', () => {
+    console.log('\n');
+    logger.info(formatters.info(`${msg.icons.info} Streaming detenido por el usuario`));
+    process.exit(0);
+  });
+  
+  // Mostrar encabezado
+  printSeparator();
+  console.log(formatters.title(`${msg.icons.file} ${msg.labels.buildLogs(Number(buildNumber))} - Streaming Mode`));
+  console.log(formatters.dim(`Actualizando cada ${intervalSeconds} segundos. Presiona Ctrl+C para salir.`));
+  printSeparator();
+  console.log();
+  
+  while (isRunning) {
+    try {
+      // Obtener logs progresivos
+      const result = await getProgressiveBuildLogs(jobName, buildNumber, start);
+      
+      // Mostrar nuevos logs si los hay
+      if (result.text && result.text.length > 0) {
+        process.stdout.write(result.text);
+      }
+      
+      // Actualizar la posición para la próxima lectura
+      start = result.size;
+      
+      // Verificar el estado del build
+      const buildInfo = await getBuildInfo(jobName, buildNumber);
+      
+      // Si el build terminó y no hay más datos
+      if (!buildInfo.building && !result.hasMore) {
+        isRunning = false;
+        console.log();
+        printSeparator();
+        
+        const statusIcon = buildInfo.result === 'SUCCESS' ? msg.icons.success : 
+                          buildInfo.result === 'FAILURE' ? msg.icons.error : 
+                          msg.icons.info;
+        const statusColor = buildInfo.result === 'SUCCESS' ? formatters.success : 
+                           buildInfo.result === 'FAILURE' ? formatters.error : 
+                           formatters.info;
+        
+        console.log(statusColor(`${statusIcon} Build completado con estado: ${buildInfo.result}`));
+        printSeparator();
+        break;
+      }
+      
+      // Mostrar estado si cambió
+      const currentStatus = buildInfo.building ? 'RUNNING' : (buildInfo.result || 'UNKNOWN');
+      if (currentStatus !== lastStatus) {
+        if (lastStatus !== '') {
+          console.log();
+          console.log(formatters.dim(`Estado: ${currentStatus}`));
+        }
+        lastStatus = currentStatus;
+      }
+      
+      // Esperar antes de la próxima actualización
+      if (isRunning) {
+        await new Promise(resolve => setTimeout(resolve, intervalSeconds * 1000));
+      }
+      
+    } catch (error: any) {
+      logger.error(`${msg.icons.error} Error en streaming: ${error.message}`);
+      isRunning = false;
+    }
   }
 }
 
