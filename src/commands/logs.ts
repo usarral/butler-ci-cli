@@ -156,9 +156,7 @@ async function streamLogs(
       }
       
       // Esperar antes de la próxima actualización
-      if (isRunning) {
-        await new Promise(resolve => setTimeout(resolve, intervalSeconds * 1000));
-      }
+      await new Promise(resolve => setTimeout(resolve, intervalSeconds * 1000));
       
     } catch (error: any) {
       logger.error(`${msg.icons.error} Error en streaming: ${error.message}`);
