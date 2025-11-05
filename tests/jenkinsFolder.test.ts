@@ -373,7 +373,6 @@ describe('Jenkins Folder Operations', () => {
     });
 
     it('should throw error for invalid build', async () => {
-      mockAxios.onGet('/job/test-job-1/999/logText/progressiveText?start=0').reply(404);
 
       await expect(getProgressiveBuildLogs('test-job-1', '999', 0)).rejects.toThrow();
     });
