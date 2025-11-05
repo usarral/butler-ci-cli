@@ -75,7 +75,7 @@ pnpm install -g .
 yarn global add .
 ```
 
-### Installation from npm (when published)
+### Installation from npm
 
 ```bash
 # With npm
