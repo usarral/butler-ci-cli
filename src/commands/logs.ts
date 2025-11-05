@@ -104,9 +104,8 @@ async function streamLogs(
     process.exit(0);
   };
   
-  // Remover handlers existentes y añadir el nuevo
-  process.removeAllListeners('SIGINT');
-  process.on('SIGINT', sigintHandler);
+  // Añadir handler propio sin interferir con otros
+  process.once('SIGINT', sigintHandler);
   
   // Mostrar encabezado
   printSeparator();
