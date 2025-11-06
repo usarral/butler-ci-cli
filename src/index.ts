@@ -12,7 +12,6 @@ import { build } from "./commands/build";
 import { showLogs } from "./commands/logs";
 import { listBuilds } from "./commands/listBuilds";
 import { setupConfigCommands } from "./commands/config";
-import { getVersion } from "./utils/getVersion";
 
 
 const program = new Command();
@@ -20,7 +19,7 @@ const program = new Command();
 program
   .name("butler-ci-cli")
   .description("CLI para interactuar con Pipelines Jenkins")
-  .version(getVersion());
+  .version("3.0.10");
 
 // Comandos de configuración
 setupConfigCommands(program);
