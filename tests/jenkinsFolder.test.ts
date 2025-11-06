@@ -11,6 +11,8 @@ import {
   getJobParameters,
   getBuildLogs,
   getBuilds,
+  getProgressiveBuildLogs,
+  getBuildInfo,
 } from '../src/utils/jenkinsFolder';
 import * as config from '../src/utils/config';
 import {
@@ -61,6 +63,44 @@ describe('Jenkins Folder Operations', () => {
     mockAxios.onGet('/job/test-job-1/42/consoleText').reply(200, mockConsoleLogOutput);
     mockAxios.onGet('/job/test-job-1/latest/consoleText').reply(200, mockConsoleLogOutput);
     mockAxios.onGet('/job/test-job-1/42/api/json').reply(200, mockDetailedBuildInfoResponse);
+    
+    // Mocks para logs progresivos
+    mockAxios.onGet('/job/test-job-1/42/logText/progressiveText?start=0').reply(200, 'Started by user admin\nBuilding in workspace', {
+      'x-text-size': '44',
+      'x-more-data': 'true'
+    });
+    mockAxios.onGet('/job/test-job-1/42/logText/progressiveText?start=44').reply(200, '\nDeployment completed\n', {
+      'x-text-size': '68',
+      'x-more-data': 'false'
+    });
+    mockAxios.onGet('/job/test-job-1/43/logText/progressiveText?start=0').reply(200, 'Build finished', {
+      'x-text-size': '14',
+      'x-more-data': 'false'
+    });
+    
+    // Mocks para getBuildInfo
+    mockAxios.onGet(/\/job\/test-job-1\/42\/api\/json\?tree=/).reply(200, {
+      number: 42,
+      url: 'http://localhost:8080/job/test-job-1/42/',
+      result: 'SUCCESS',
+      timestamp: 1698768000000,
+      duration: 45620,
+      building: false,
+      displayName: '#42',
+      fullDisplayName: 'test-job-1 #42',
+      description: null,
+    });
+    mockAxios.onGet(/\/job\/test-job-1\/50\/api\/json\?tree=/).reply(200, {
+      number: 50,
+      url: 'http://localhost:8080/job/test-job-1/50/',
+      result: null,
+      timestamp: 1698768500000,
+      duration: 0,
+      building: true,
+      displayName: '#50',
+      fullDisplayName: 'test-job-1 #50',
+      description: null,
+    });
     
     // Mocks para errores 404
     mockAxios.onGet('/job/nonexistent/api/json').reply(404);

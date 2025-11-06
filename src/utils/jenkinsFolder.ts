@@ -370,6 +370,52 @@ export async function getBuildLogs(
 }
 
 /**
+ * Interfaz para el resultado de logs progresivos
+ */
+export interface ProgressiveLogResult {
+  text: string;
+  hasMore: boolean;
+  size: number;
+}
+
+/**
+ * Obtiene los logs de un build de forma progresiva (streaming)
+ * Usa el endpoint logText/progressiveText para obtener solo los nuevos logs
+ */
+export async function getProgressiveBuildLogs(
+  jobFullName: string,
+  buildNumber: number | string,
+  start: number = 0
+): Promise<ProgressiveLogResult> {
+  const jenkins = getJenkinsClient();
+  
+  try {
+    const jobPath = jobFullName.replace(/\//g, '/job/');
+    const endpoint = `/job/${jobPath}/${buildNumber}/logText/progressiveText?start=${start}`;
+    
+    const response = await jenkins.get(endpoint, {
+      responseType: 'text',
+      headers: {
+        'Accept': 'text/plain'
+      }
+    });
+    
+    // Jenkins devuelve el header X-Text-Size con el tamaño actual del log
+    // y X-More-Data con 'true' si hay más datos disponibles
+    const textSize = parseInt(response.headers['x-text-size'] || '0', 10);
+    const hasMore = response.headers['x-more-data'] === 'true';
+    
+    return {
+      text: response.data || '',
+      hasMore,
+      size: textSize
+    };
+  } catch (error: any) {
+    throw new Error(`Error obteniendo logs progresivos del build #${buildNumber} del job ${jobFullName}: ${error.message}`);
+  }
+}
+
+/**
  * Descarga los logs de un build a un archivo
  */
 export async function downloadBuildLogs(

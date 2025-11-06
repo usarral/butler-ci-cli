@@ -13,13 +13,15 @@ import { showLogs } from "./commands/logs";
 import { listBuilds } from "./commands/listBuilds";
 import { buildInfo } from "./commands/buildInfo";
 import { setupConfigCommands } from "./commands/config";
+import { getVersion } from "./utils/getVersion";
+
 
 const program = new Command();
 
 program
   .name("butler-ci-cli")
   .description("CLI para interactuar con Pipelines Jenkins")
-  .version("3.0.0");
+  .version(getVersion());
 
 // Comandos de configuración
 setupConfigCommands(program);
@@ -83,6 +85,8 @@ program
   .option("-d, --download", "Descargar logs a archivo")
   .option("-e, --editor", "Abrir logs en el editor configurado")
   .option("-o, --output <path>", "Ruta de salida para el archivo de logs")
+  .option("-s, --stream", "Ver logs en tiempo real (streaming mode)")
+  .option("-i, --interval <seconds>", "Intervalo de actualización en segundos para streaming (default: 5)", parseInt, 5)
   .description("Ver logs de un build específico")
   .action(showLogs);
 

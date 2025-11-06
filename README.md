@@ -25,6 +25,7 @@ Butler CI CLI is a terminal application that allows you to manage and monitor Je
 - 📋 Query required parameters for jobs
 - 🚀 Execute builds in an assisted manner (interactive or with CLI parameters)
 - 📄 View and download build logs
+- 🔄 Stream logs in real-time with configurable refresh intervals
 - ✏️ Open logs in configurable editors
 - ⚙️ Customizable preferences system (editor, log viewer, directory)
 
@@ -75,7 +76,7 @@ pnpm install -g .
 yarn global add .
 ```
 
-### Installation from npm (when published)
+### Installation from npm
 
 ```bash
 # With npm
@@ -256,6 +257,14 @@ View, download, or open logs from a specific build in an editor.
 butler-ci-cli logs my-job 42
 butler-ci-cli logs my-job latest
 
+# Stream logs in real-time (refreshes every 5 seconds by default)
+butler-ci-cli logs my-job 42 --stream
+butler-ci-cli logs my-job latest -s
+
+# Stream with custom refresh interval (in seconds)
+butler-ci-cli logs my-job 42 --stream --interval 10
+butler-ci-cli logs my-job latest -s -i 3
+
 # Download logs to file
 butler-ci-cli logs my-job 42 --download
 butler-ci-cli logs my-job latest -d
@@ -327,6 +336,8 @@ butler-ci-cli list-builds my-job --since 2024-01-01 --limit 20
 # Work with logs
 butler-ci-cli logs my-job 42            # View logs in terminal
 butler-ci-cli logs my-job latest        # View latest build logs
+butler-ci-cli logs my-job latest -s     # Stream logs in real-time
+butler-ci-cli logs my-job latest -s -i 3  # Stream with 3 second refresh
 butler-ci-cli logs my-job 42 -d         # Download logs
 butler-ci-cli logs my-job latest -e     # Open latest build in editor
 ```
