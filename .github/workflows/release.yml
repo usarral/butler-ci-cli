@@ -1,6 +1,7 @@
 name: Automated Release on Master
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
