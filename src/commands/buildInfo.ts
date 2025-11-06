@@ -137,7 +137,7 @@ function displayTimingInfo(buildData: DetailedBuildInfo) {
     table.add('Duración estimada:', `~${estimatedMinutes}m`);
   }
   
-  if (table['rows'].length > 0) {
+  if (table.hasRows()) {
     console.log(table.build());
   }
 }
