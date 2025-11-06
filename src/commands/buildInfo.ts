@@ -206,7 +206,7 @@ function displayMetadata(buildData: DetailedBuildInfo) {
     table.add('En ejecución:', buildData.building ? 'Sí' : 'No');
   }
   
-  if (table['rows'].length > 0) {
+  if (table.hasRows()) {
     console.log(`\n${formatters.title('ℹ️  Metadata:')}`);
     console.log(table.build());
   }
