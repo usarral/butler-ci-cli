@@ -28,6 +28,7 @@ Butler CI CLI is a terminal application that allows you to manage and monitor Je
 - 🔄 Stream logs in real-time with configurable refresh intervals
 - ✏️ Open logs in configurable editors
 - ⚙️ Customizable preferences system (editor, log viewer, directory)
+- 🔍 View workflow steps and stages of job executions
 
 ## 🛠️ Installation
 
@@ -239,6 +240,20 @@ Shows the parameters a job needs to run, including their default values.
 butler-ci-cli job-params my-pipeline-job
 ```
 
+#### `job-steps <jobName> <buildNumber|latest>`
+Shows the individual steps of a given job's build execution. Displays stages and their steps with status, duration, and error details (if any).
+
+```bash
+# View steps of a specific build
+butler-ci-cli job-steps my-pipeline-job 42
+
+# View steps of the latest build
+butler-ci-cli job-steps my-pipeline-job latest
+
+# Works with folder paths
+butler-ci-cli job-steps backend/api-service 123
+```
+
 #### `build <jobName>`
 Executes a build of a job in an assisted manner. The command will interactively request values for each required parameter.
 
@@ -327,6 +342,8 @@ butler-ci-cli last-build backend/api    # Last build of backend/api job
 butler-ci-cli job-params my-pipeline    # View job parameters
 butler-ci-cli build my-pipeline         # Execute build (interactive mode)
 butler-ci-cli build my-pipeline --params "ENV=prod,VERSION=1.0.0"
+butler-ci-cli job-steps my-pipeline 42  # View steps of build #42
+butler-ci-cli job-steps my-pipeline latest  # View steps of latest build
 
 # List and filter builds
 butler-ci-cli list-builds my-job              # List recent builds
