@@ -11,6 +11,7 @@ import { jobParams } from "./commands/jobParams";
 import { build } from "./commands/build";
 import { showLogs } from "./commands/logs";
 import { listBuilds } from "./commands/listBuilds";
+import { jobSteps } from "./commands/jobSteps";
 import { setupConfigCommands } from "./commands/config";
 
 
@@ -101,5 +102,12 @@ program
   .option("--order <order>", "Orden de clasificación (asc, desc)", "desc")
   .description("Listar builds de un job con opciones de filtrado y paginación")
   .action(listBuilds);
+
+program
+  .command("job-steps")
+  .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
+  .argument("<buildNumber>", "Número del build o 'latest' para el más reciente")
+  .description("Mostrar los pasos (steps) de un build específico")
+  .action(jobSteps);
 
 program.parse();
