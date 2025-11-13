@@ -12,14 +12,18 @@ on:
       - '.gitignore'
       - 'renovate.json'
 
+# Permisos a nivel workflow: id-token: write es requerido para OIDC (Trusted Publishers)
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      id-token: write
-    
+    # Si en npm configuraste un "Environment name", descomenta y pon el nombre exacto:
+    # environment: npm-publish
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -32,6 +36,14 @@ jobs:
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Ensure npm CLI supports OIDC (upgrade if needed)
+        # Trusted publishing requires npm CLI with OIDC support (see npm docs).
+        # Usamos corepack para activar una versión reciente de npm en el runner.
+        run: |
+          corepack enable
+          corepack prepare npm@latest --activate
+          echo "npm version: $(npm --version)"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -149,5 +161,11 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Publish to npm
-        run: npm publish
+      - name: Publish to npm (Trusted Publishers / OIDC)
+        # No NPM_TOKEN needed — npm CLI will use OIDC token if this workflow is registered as a Trusted Publisher.
+        run: |
+          echo "Publishing package via npm (Trusted Publisher / OIDC)"
+          npm publish
+        # Nota: no export de NPM_TOKEN ni NODE_AUTH_TOKEN. Si quieres desactivar provenance:
+        # env:
+        #   NPM_CONFIG_PROVENANCE: false
