@@ -357,6 +357,16 @@ export const mockAbortedBuildResponse = {
   ],
 };
 
+export const mockRunningBuildResponse = {
+  ...mockBuildInfoResponse,
+  number: 50,
+  url: 'http://localhost:8080/job/test-job-1/50/',
+  result: null,
+  building: true,
+  duration: 0,
+  estimatedDuration: 45000,
+};
+
 export const mockBuildsListResponse = {
   _class: 'hudson.model.FreeStyleProject',
   name: 'test-job-1',

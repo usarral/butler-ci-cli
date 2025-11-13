@@ -11,6 +11,7 @@ import { jobParams } from "./commands/jobParams";
 import { build } from "./commands/build";
 import { showLogs } from "./commands/logs";
 import { listBuilds } from "./commands/listBuilds";
+import { abort } from "./commands/abort";
 import { setupConfigCommands } from "./commands/config";
 
 
@@ -101,5 +102,13 @@ program
   .option("--order <order>", "Orden de clasificación (asc, desc)", "desc")
   .description("Listar builds de un job con opciones de filtrado y paginación")
   .action(listBuilds);
+
+program
+  .command("abort")
+  .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
+  .argument("<buildNumber>", "Número del build o 'latest' para el más reciente")
+  .option("-f, --force", "Abortar sin confirmación")
+  .description("Abortar un build en ejecución o en cola")
+  .action(abort);
 
 program.parse();
