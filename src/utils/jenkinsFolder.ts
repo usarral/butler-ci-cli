@@ -515,3 +515,119 @@ export async function getBuilds(
     throw new Error(`Error obteniendo builds del job ${jobFullName}: ${error.message}`);
   }
 }
+
+/**
+ * Interface for workflow step information
+ */
+export interface WorkflowStep {
+  id: string;
+  name: string;
+  status: string;
+  startTimeMillis?: number;
+  durationMillis?: number;
+  pauseDurationMillis?: number;
+  error?: {
+    message: string;
+    type: string;
+  };
+}
+
+/**
+ * Interface for workflow stage information
+ */
+export interface WorkflowStage {
+  id: string;
+  name: string;
+  status: string;
+  startTimeMillis?: number;
+  durationMillis?: number;
+  pauseDurationMillis?: number;
+  stageFlowNodes?: WorkflowStep[];
+}
+
+/**
+ * Obtiene los pasos (steps) de un build específico de un workflow job
+ * Usa la API wfapi que está disponible cuando el Pipeline Stage View Plugin está instalado
+ */
+export async function getWorkflowSteps(
+  jobFullName: string,
+  buildNumber: number | string
+): Promise<WorkflowStage[]> {
+  const jenkins = getJenkinsClient();
+  
+  try {
+    const jobPath = jobFullName.replace(/\//g, '/job/');
+    
+    // Intentar usar la API wfapi primero (Pipeline Stage View Plugin)
+    try {
+      const response = await jenkins.get(`/job/${jobPath}/${buildNumber}/wfapi/describe`);
+      
+      if (response.data?.stages) {
+        return response.data.stages.map((stage: any) => ({
+          id: stage.id || '',
+          name: stage.name || 'Unknown',
+          status: stage.status || 'UNKNOWN',
+          startTimeMillis: stage.startTimeMillis,
+          durationMillis: stage.durationMillis,
+          pauseDurationMillis: stage.pauseDurationMillis,
+          stageFlowNodes: stage.stageFlowNodes?.map((step: any) => ({
+            id: step.id || '',
+            name: step.name || 'Unknown',
+            status: step.status || 'UNKNOWN',
+            startTimeMillis: step.startTimeMillis,
+            durationMillis: step.durationMillis,
+            pauseDurationMillis: step.pauseDurationMillis,
+            error: step.error ? {
+              message: step.error.message || '',
+              type: step.error.type || ''
+            } : undefined
+          })) || []
+        }));
+      }
+    } catch (wfapiError: any) {
+      // Si wfapi no está disponible, intentar obtener información del build estándar
+      logger.debug(`wfapi no disponible, intentando método alternativo: ${wfapiError.message}`);
+    }
+    
+    // Método alternativo: obtener información básica del build
+    // Esto proporciona menos detalles pero funciona sin plugins adicionales
+    const buildResponse = await jenkins.get(`/job/${jobPath}/${buildNumber}/api/json`);
+    const buildData = buildResponse.data;
+    
+    // Buscar acciones que contengan información de ejecución
+    const executionAction = buildData.actions?.find(
+      (action: any) => action._class?.includes('FlowGraphAction') || 
+                       action._class?.includes('FlowExecutionList')
+    );
+    
+    if (executionAction) {
+      // Si encontramos información de flujo, retornarla
+      const stages: WorkflowStage[] = [];
+      
+      // Construir una vista básica del build como un solo stage
+      stages.push({
+        id: '1',
+        name: 'Build Execution',
+        status: buildData.result || (buildData.building ? 'IN_PROGRESS' : 'UNKNOWN'),
+        startTimeMillis: buildData.timestamp,
+        durationMillis: buildData.duration,
+        stageFlowNodes: []
+      });
+      
+      return stages;
+    }
+    
+    // Si no hay información de workflow, retornar un stage genérico
+    return [{
+      id: '1',
+      name: 'Build',
+      status: buildData.result || (buildData.building ? 'IN_PROGRESS' : 'UNKNOWN'),
+      startTimeMillis: buildData.timestamp,
+      durationMillis: buildData.duration,
+      stageFlowNodes: []
+    }];
+    
+  } catch (error: any) {
+    throw new Error(`Error obteniendo pasos del build #${buildNumber} del job ${jobFullName}: ${error.message}`);
+  }
+}
