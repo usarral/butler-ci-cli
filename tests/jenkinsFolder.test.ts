@@ -11,6 +11,8 @@ import {
   getBuildLogs,
   getBuilds,
   abortBuild,
+  getProgressiveBuildLogs,
+  getBuildInfo,
 } from '../src/utils/jenkinsFolder';
 import * as config from '../src/utils/config';
 import {
@@ -70,6 +72,43 @@ describe('Jenkins Folder Operations', () => {
       number: 55,
     });
     mockAxios.onPost('/job/backend/job/api-service/55/stop').reply(200);
+    // Mocks para logs progresivos
+    mockAxios.onGet('/job/test-job-1/42/logText/progressiveText?start=0').reply(200, 'Started by user admin\nBuilding in workspace', {
+      'x-text-size': '44',
+      'x-more-data': 'true'
+    });
+    mockAxios.onGet('/job/test-job-1/42/logText/progressiveText?start=44').reply(200, '\nDeployment completed\n', {
+      'x-text-size': '68',
+      'x-more-data': 'false'
+    });
+    mockAxios.onGet('/job/test-job-1/43/logText/progressiveText?start=0').reply(200, 'Build finished', {
+      'x-text-size': '14',
+      'x-more-data': 'false'
+    });
+    
+    // Mocks para getBuildInfo
+    mockAxios.onGet(/\/job\/test-job-1\/42\/api\/json\?tree=/).reply(200, {
+      number: 42,
+      url: 'http://localhost:8080/job/test-job-1/42/',
+      result: 'SUCCESS',
+      timestamp: 1698768000000,
+      duration: 45620,
+      building: false,
+      displayName: '#42',
+      fullDisplayName: 'test-job-1 #42',
+      description: null,
+    });
+    mockAxios.onGet(/\/job\/test-job-1\/50\/api\/json\?tree=/).reply(200, {
+      number: 50,
+      url: 'http://localhost:8080/job/test-job-1/50/',
+      result: null,
+      timestamp: 1698768500000,
+      duration: 0,
+      building: true,
+      displayName: '#50',
+      fullDisplayName: 'test-job-1 #50',
+      description: null,
+    });
     
     // Mocks para errores 404
     mockAxios.onGet('/job/nonexistent/api/json').reply(404);
@@ -78,6 +117,8 @@ describe('Jenkins Folder Operations', () => {
     mockAxios.onGet('/job/nonexistent-job/50/api/json').reply(404);
     mockAxios.onGet('/job/test-job-1/999/consoleText').reply(404);
     mockAxios.onGet('/job/test-job-1/999/api/json').reply(404);
+    mockAxios.onGet('/job/test-job-1/999/logText/progressiveText?start=0').reply(404);
+    mockAxios.onGet(/\/job\/test-job-1\/999\/api\/json\?tree=/).reply(404);
   });
 
   afterEach(() => {
@@ -397,6 +438,56 @@ describe('Jenkins Folder Operations', () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain('backend/api-service');
       expect(result.message).toContain('55');
+  describe('getProgressiveBuildLogs', () => {
+    it('should fetch progressive logs from start', async () => {
+      const result = await getProgressiveBuildLogs('test-job-1', '42', 0);
+
+      expect(result.text).toBe('Started by user admin\nBuilding in workspace');
+      expect(result.size).toBe(44);
+      expect(result.hasMore).toBe(true);
+    });
+
+    it('should fetch next chunk of progressive logs', async () => {
+      const result = await getProgressiveBuildLogs('test-job-1', '42', 44);
+
+      expect(result.text).toBe('\nDeployment completed\n');
+      expect(result.size).toBe(68);
+      expect(result.hasMore).toBe(false);
+    });
+
+    it('should handle completed build with no more data', async () => {
+      const result = await getProgressiveBuildLogs('test-job-1', '43', 0);
+
+      expect(result.text).toBe('Build finished');
+      expect(result.hasMore).toBe(false);
+    });
+
+    it('should throw error for invalid build', async () => {
+
+      await expect(getProgressiveBuildLogs('test-job-1', '999', 0)).rejects.toThrow();
+    });
+  });
+
+  describe('getBuildInfo', () => {
+    it('should fetch build information', async () => {
+      const buildInfo = await getBuildInfo('test-job-1', '42');
+
+      expect(buildInfo.number).toBe(42);
+      expect(buildInfo.result).toBe('SUCCESS');
+      expect(buildInfo.building).toBe(false);
+      expect(buildInfo.duration).toBe(45620);
+    });
+
+    it('should handle running build', async () => {
+      const buildInfo = await getBuildInfo('test-job-1', '50');
+
+      expect(buildInfo.number).toBe(50);
+      expect(buildInfo.building).toBe(true);
+      expect(buildInfo.result).toBe(null);
+    });
+
+    it('should throw error for non-existent build', async () => {
+      await expect(getBuildInfo('test-job-1', '999')).rejects.toThrow();
     });
   });
 });
