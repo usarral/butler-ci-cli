@@ -34,8 +34,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org/'
 
       - name: Ensure npm CLI supports OIDC (upgrade if needed)
         # Trusted publishing requires npm CLI with OIDC support (see npm docs).
@@ -161,11 +161,8 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Publish to npm (Trusted Publishers / OIDC)
-        # No NPM_TOKEN needed — npm CLI will use OIDC token if this workflow is registered as a Trusted Publisher.
-        run: |
-          echo "Publishing package via npm (Trusted Publisher / OIDC)"
-          npm publish
+      - name: Release and publish to npm
+        run: npx semantic-release
         # Nota: no export de NPM_TOKEN ni NODE_AUTH_TOKEN. Si quieres desactivar provenance:
         # env:
         #   NPM_CONFIG_PROVENANCE: false
