@@ -21,8 +21,6 @@ export const messages = {
     permissionDenied: 'Error de permisos al descargar.',
     openingEditor: 'Error abriendo editor',
     generic: 'Error',
-    abortError: (build: number | string, job: string, error: string) => 
-      `Error abortando build #${build} del job ${job}: ${error}`,
     buildNotRunning: (build: number) => `El build #${build} no está en ejecución y no puede ser abortado`,
   },
 
