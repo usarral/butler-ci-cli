@@ -185,14 +185,16 @@ Edits configuration preferences (editor, log viewer, download directory).
 
 ### Jenkins Commands
 
-#### `fetch-jobs`
+#### General Commands
+
+##### `fetch-jobs`
 Downloads and saves the list of all available jobs in Jenkins, including those within folders and subfolders.
 
 ```bash
 butler-ci-cli fetch-jobs
 ```
 
-#### `list-jobs`
+##### `list-jobs`
 Shows all available jobs in Jenkins with hierarchical folder structure.
 
 ```bash
@@ -201,7 +203,7 @@ butler-ci-cli list-jobs --folders           # Include folders in the view
 butler-ci-cli list-jobs --max-level 2      # Limit depth
 ```
 
-#### `show-folders`
+##### `show-folders`
 Shows only the Jenkins folder structure.
 
 ```bash
@@ -209,115 +211,140 @@ butler-ci-cli show-folders
 butler-ci-cli show-folders --max-level 3
 ```
 
-#### `search-jobs`
+##### `search-jobs`
 Searches for jobs by name across the entire Jenkins structure.
 
 ```bash
 butler-ci-cli search-jobs <searchTerm>
 ```
 
-#### `job-info <jobName>`
+#### Jobs Commands
+
+All job-related operations are now organized under the `jobs` command:
+
+##### `jobs info <jobName>`
 Gets detailed information about a specific job. Supports folder paths.
 
 ```bash
+butler-ci-cli jobs info my-pipeline-job
+butler-ci-cli jobs info frontend/build-app
+butler-ci-cli jobs info backend/microservices/user-service
+
+# Deprecated (still works with warning):
 butler-ci-cli job-info my-pipeline-job
-butler-ci-cli job-info frontend/build-app
-butler-ci-cli job-info backend/microservices/user-service
 ```
 
-#### `last-build <jobName>`
+##### `jobs last-build <jobName>`
 Shows information about the last executed build of a job. Supports folder paths.
 
 ```bash
+butler-ci-cli jobs last-build my-pipeline-job
+butler-ci-cli jobs last-build frontend/build-app
+
+# Deprecated (still works with warning):
 butler-ci-cli last-build my-pipeline-job
-butler-ci-cli last-build frontend/build-app
 ```
 
-#### `job-params <jobName>`
+##### `jobs params <jobName>`
 Shows the parameters a job needs to run, including their default values.
 
 ```bash
+butler-ci-cli jobs params my-pipeline-job
+
+# Deprecated (still works with warning):
 butler-ci-cli job-params my-pipeline-job
 ```
 
-#### `job-steps <jobName> <buildNumber|latest>`
+##### `jobs steps <jobName> <buildNumber|latest>`
 Shows the individual steps of a given job's build execution. Displays stages and their steps with status, duration, and error details (if any).
 
 ```bash
 # View steps of a specific build
-butler-ci-cli job-steps my-pipeline-job 42
+butler-ci-cli jobs steps my-pipeline-job 42
 
 # View steps of the latest build
-butler-ci-cli job-steps my-pipeline-job latest
+butler-ci-cli jobs steps my-pipeline-job latest
 
 # Works with folder paths
-butler-ci-cli job-steps backend/api-service 123
+butler-ci-cli jobs steps backend/api-service 123
+
+# Deprecated (still works with warning):
+butler-ci-cli job-steps my-pipeline-job 42
 ```
 
-#### `build <jobName>`
+##### `jobs build <jobName>`
 Executes a build of a job in an assisted manner. The command will interactively request values for each required parameter.
 
 ```bash
-butler-ci-cli build my-pipeline-job
+butler-ci-cli jobs build my-pipeline-job
 
 # You can also pass parameters directly via CLI
+butler-ci-cli jobs build my-job --params "ENVIRONMENT=production,VERSION=1.2.3"
+
+# Deprecated (still works with warning):
 butler-ci-cli build my-job --params "ENVIRONMENT=production,VERSION=1.2.3"
 ```
 
-#### `logs <jobName> <buildNumber|latest>`
+##### `jobs logs <jobName> <buildNumber|latest>`
 View, download, or open logs from a specific build in an editor.
 
 ```bash
 # View logs in terminal
-butler-ci-cli logs my-job 42
-butler-ci-cli logs my-job latest
+butler-ci-cli jobs logs my-job 42
+butler-ci-cli jobs logs my-job latest
 
 # Stream logs in real-time (refreshes every 5 seconds by default)
-butler-ci-cli logs my-job 42 --stream
-butler-ci-cli logs my-job latest -s
+butler-ci-cli jobs logs my-job 42 --stream
+butler-ci-cli jobs logs my-job latest -s
 
 # Stream with custom refresh interval (in seconds)
-butler-ci-cli logs my-job 42 --stream --interval 10
-butler-ci-cli logs my-job latest -s -i 3
+butler-ci-cli jobs logs my-job 42 --stream --interval 10
+butler-ci-cli jobs logs my-job latest -s -i 3
 
 # Download logs to file
-butler-ci-cli logs my-job 42 --download
-butler-ci-cli logs my-job latest -d
+butler-ci-cli jobs logs my-job 42 --download
+butler-ci-cli jobs logs my-job latest -d
 
 # Open logs in configured editor
-butler-ci-cli logs my-job 42 --editor
-butler-ci-cli logs my-job latest -e
+butler-ci-cli jobs logs my-job 42 --editor
+butler-ci-cli jobs logs my-job latest -e
 
 # Download to specific location
+butler-ci-cli jobs logs my-job 42 --download --output /tmp/build.log
+
+# Deprecated (still works with warning):
 butler-ci-cli logs my-job 42 --download --output /tmp/build.log
 ```
 
-#### `list-builds <jobName>`
+##### `jobs list-builds <jobName>`
 Lists all builds for a specified job with support for filtering, pagination, and sorting.
 
 ```bash
 # List all builds (default: 50 most recent)
-butler-ci-cli list-builds my-pipeline-job
+butler-ci-cli jobs list-builds my-pipeline-job
 
 # Filter by status
-butler-ci-cli list-builds my-job --status SUCCESS
-butler-ci-cli list-builds my-job --status FAILURE
-butler-ci-cli list-builds my-job --status RUNNING
+butler-ci-cli jobs list-builds my-job --status SUCCESS
+butler-ci-cli jobs list-builds my-job --status FAILURE
+butler-ci-cli jobs list-builds my-job --status RUNNING
 
 # Filter by date range
-butler-ci-cli list-builds my-job --since 2024-01-01
-butler-ci-cli list-builds my-job --since 2024-01-01 --until 2024-12-31
+butler-ci-cli jobs list-builds my-job --since 2024-01-01
+butler-ci-cli jobs list-builds my-job --since 2024-01-01 --until 2024-12-31
 
 # Pagination
-butler-ci-cli list-builds my-job --limit 10
-butler-ci-cli list-builds my-job --offset 20 --limit 10
+butler-ci-cli jobs list-builds my-job --limit 10
+butler-ci-cli jobs list-builds my-job --offset 20 --limit 10
 
 # Sorting
-butler-ci-cli list-builds my-job --sort-by timestamp --order asc
-butler-ci-cli list-builds my-job --sort-by number --order desc
+butler-ci-cli jobs list-builds my-job --sort-by timestamp --order asc
+butler-ci-cli jobs list-builds my-job --sort-by number --order desc
 
 # Combined filters
-butler-ci-cli list-builds my-job --status SUCCESS --since 2024-01-01 --limit 20
+butler-ci-cli jobs list-builds my-job --status SUCCESS --since 2024-01-01 --limit 20
+
+# Deprecated (still works with warning):
+butler-ci-cli list-builds my-job --status SUCCESS
 ```
 
 ### Example Workflow
@@ -335,28 +362,28 @@ butler-ci-cli list-jobs --folders       # View jobs and folders
 
 # Search and get specific information
 butler-ci-cli search-jobs user          # Search for jobs containing "user"
-butler-ci-cli job-info frontend/build   # Info about job in frontend folder
-butler-ci-cli last-build backend/api    # Last build of backend/api job
+butler-ci-cli jobs info frontend/build   # Info about job in frontend folder
+butler-ci-cli jobs last-build backend/api    # Last build of backend/api job
 
 # View parameters and execute builds
-butler-ci-cli job-params my-pipeline    # View job parameters
-butler-ci-cli build my-pipeline         # Execute build (interactive mode)
-butler-ci-cli build my-pipeline --params "ENV=prod,VERSION=1.0.0"
-butler-ci-cli job-steps my-pipeline 42  # View steps of build #42
-butler-ci-cli job-steps my-pipeline latest  # View steps of latest build
+butler-ci-cli jobs params my-pipeline    # View job parameters
+butler-ci-cli jobs build my-pipeline         # Execute build (interactive mode)
+butler-ci-cli jobs build my-pipeline --params "ENV=prod,VERSION=1.0.0"
+butler-ci-cli jobs steps my-pipeline 42  # View steps of build #42
+butler-ci-cli jobs steps my-pipeline latest  # View steps of latest build
 
 # List and filter builds
-butler-ci-cli list-builds my-job              # List recent builds
-butler-ci-cli list-builds my-job --status SUCCESS  # Only successful builds
-butler-ci-cli list-builds my-job --since 2024-01-01 --limit 20
+butler-ci-cli jobs list-builds my-job              # List recent builds
+butler-ci-cli jobs list-builds my-job --status SUCCESS  # Only successful builds
+butler-ci-cli jobs list-builds my-job --since 2024-01-01 --limit 20
 
 # Work with logs
-butler-ci-cli logs my-job 42            # View logs in terminal
-butler-ci-cli logs my-job latest        # View latest build logs
-butler-ci-cli logs my-job latest -s     # Stream logs in real-time
-butler-ci-cli logs my-job latest -s -i 3  # Stream with 3 second refresh
-butler-ci-cli logs my-job 42 -d         # Download logs
-butler-ci-cli logs my-job latest -e     # Open latest build in editor
+butler-ci-cli jobs logs my-job 42            # View logs in terminal
+butler-ci-cli jobs logs my-job latest        # View latest build logs
+butler-ci-cli jobs logs my-job latest -s     # Stream logs in real-time
+butler-ci-cli jobs logs my-job latest -s -i 3  # Stream with 3 second refresh
+butler-ci-cli jobs logs my-job 42 -d         # Download logs
+butler-ci-cli jobs logs my-job latest -e     # Open latest build in editor
 ```
 
 ## 🗂️ Project Structure
