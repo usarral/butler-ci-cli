@@ -77,7 +77,8 @@ createDeprecatedAlias(
   "jobs info",
   jobInfo,
   {
-    args: [{ name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" }]
+    args: [{ name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" }],
+    description: "Obtener información detallada de un job (deprecado, usa 'jobs info')"
   }
 );
 
@@ -87,7 +88,7 @@ createDeprecatedAlias(
   jobParams,
   {
     args: [{ name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" }],
-    description: "Mostrar los parámetros requeridos por un job"
+    description: "Mostrar los parámetros requeridos por un job (deprecado, usa 'jobs params')"
   }
 );
 
@@ -100,7 +101,7 @@ createDeprecatedAlias(
       { name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" },
       { name: "<buildNumber>", description: "Número del build o 'latest' para el más reciente" }
     ],
-    description: "Mostrar los pasos (steps) de un build específico"
+    description: "Mostrar los pasos (steps) de un build específico (deprecado, usa 'jobs steps')"
   }
 );
 
@@ -109,7 +110,8 @@ createDeprecatedAlias(
   "jobs last-build",
   lastBuild,
   {
-    args: [{ name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" }]
+    args: [{ name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" }],
+    description: "Obtener información del último build de un job (deprecado, usa 'jobs last-build')"
   }
 );
 
@@ -120,7 +122,7 @@ createDeprecatedAlias(
   {
     args: [{ name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" }],
     options: [{ flags: "--params <params>", description: "Parámetros en formato key=value,key2=value2" }],
-    description: "Ejecutar un build de forma asistida"
+    description: "Ejecutar un build de forma asistida (deprecado, usa 'jobs build')"
   }
 );
 
@@ -140,7 +142,7 @@ createDeprecatedAlias(
       { flags: "--sort-by <field>", description: "Campo por el que ordenar (number, timestamp)", defaultValue: "number" },
       { flags: "--order <order>", description: "Orden de clasificación (asc, desc)", defaultValue: "desc" }
     ],
-    description: "Listar builds de un job con opciones de filtrado y paginación"
+    description: "Listar builds de un job con opciones de filtrado y paginación (deprecado, usa 'jobs list-builds')"
   }
 );
 
@@ -160,7 +162,7 @@ createDeprecatedAlias(
       { flags: "-s, --stream", description: "Ver logs en tiempo real (streaming mode)" },
       { flags: "-i, --interval <seconds>", description: "Intervalo de actualización en segundos para streaming (default: 5)", parser: parseInt, defaultValue: 5 }
     ],
-    description: "Ver logs de un build específico"
+    description: "Ver logs de un build específico (deprecado, usa 'jobs logs')"
   }
 );
 
