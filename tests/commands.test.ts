@@ -1,7 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Command } from 'commander';
 import { setupJobsCommands } from '../src/commands/jobs';
 import { setupConfigCommands } from '../src/commands/config';
+import { createDeprecatedAlias } from '../src/utils/deprecatedCommands';
+import { logger } from '../src/utils/logger';
 
 describe('Command Structure', () => {
   describe('Jobs Commands', () => {
@@ -117,6 +119,123 @@ describe('Command Structure', () => {
       expect(subcommands).toContain('delete');
       expect(subcommands).toContain('current');
       expect(subcommands).toContain('edit');
+    });
+  });
+
+  describe('Deprecated Command Aliases', () => {
+    it('should register deprecated command alias', () => {
+      const program = new Command();
+      const mockAction = vi.fn();
+      
+      createDeprecatedAlias(
+        program,
+        'test-command',
+        'new test-command',
+        mockAction,
+        {
+          args: [{ name: '<arg>', description: 'Test argument' }],
+          description: 'Test description'
+        }
+      );
+      
+      const command = program.commands.find(cmd => cmd.name() === 'test-command');
+      expect(command).toBeDefined();
+      expect(command?.description()).toBe('Test description');
+    });
+
+    it('should register deprecated command with correct arguments', () => {
+      const program = new Command();
+      const mockAction = vi.fn();
+      
+      createDeprecatedAlias(
+        program,
+        'old-command',
+        'new-command',
+        mockAction,
+        {
+          args: [{ name: '<jobName>', description: 'Job name' }]
+        }
+      );
+      
+      const command = program.commands.find(cmd => cmd.name() === 'old-command');
+      expect(command).toBeDefined();
+      
+      // Verify the command has an action handler registered
+      expect(command?._actionHandler).toBeDefined();
+    });
+
+    it('should register deprecated command with multiple arguments', () => {
+      const program = new Command();
+      const mockAction = vi.fn();
+      
+      createDeprecatedAlias(
+        program,
+        'multi-arg-command',
+        'new multi-arg-command',
+        mockAction,
+        {
+          args: [
+            { name: '<arg1>', description: 'First argument' },
+            { name: '<arg2>', description: 'Second argument' }
+          ]
+        }
+      );
+      
+      const command = program.commands.find(cmd => cmd.name() === 'multi-arg-command');
+      expect(command).toBeDefined();
+      expect(command?._actionHandler).toBeDefined();
+    });
+
+    it('should handle commands with options', () => {
+      const program = new Command();
+      const mockAction = vi.fn();
+      
+      createDeprecatedAlias(
+        program,
+        'command-with-options',
+        'new command-with-options',
+        mockAction,
+        {
+          args: [{ name: '<jobName>', description: 'Job name' }],
+          options: [
+            { flags: '--status <status>', description: 'Filter by status' },
+            { flags: '--limit <number>', description: 'Limit results', parser: parseInt, defaultValue: 50 }
+          ]
+        }
+      );
+      
+      const command = program.commands.find(cmd => cmd.name() === 'command-with-options');
+      expect(command).toBeDefined();
+      
+      // Verify options are registered
+      const options = command?.options.map(opt => opt.flags);
+      expect(options).toContain('--status <status>');
+      expect(options).toContain('--limit <number>');
+    });
+
+    it('should support commands with both short and long option flags', () => {
+      const program = new Command();
+      const mockAction = vi.fn();
+      
+      createDeprecatedAlias(
+        program,
+        'command-with-flags',
+        'new command-with-flags',
+        mockAction,
+        {
+          options: [
+            { flags: '-d, --download', description: 'Download flag' },
+            { flags: '-v, --verbose', description: 'Verbose flag' }
+          ]
+        }
+      );
+      
+      const command = program.commands.find(cmd => cmd.name() === 'command-with-flags');
+      expect(command).toBeDefined();
+      
+      const options = command?.options.map(opt => opt.flags);
+      expect(options).toContain('-d, --download');
+      expect(options).toContain('-v, --verbose');
     });
   });
 });

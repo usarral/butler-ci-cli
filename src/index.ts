@@ -14,7 +14,7 @@ import { listBuilds } from "./commands/listBuilds";
 import { jobSteps } from "./commands/jobSteps";
 import { setupConfigCommands } from "./commands/config";
 import { setupJobsCommands } from "./commands/jobs";
-import { logger } from "./utils/logger";
+import { createDeprecatedAlias } from "./utils/deprecatedCommands";
 
 
 const program = new Command();
@@ -30,49 +30,9 @@ setupConfigCommands(program);
 // Comandos de jobs (nueva estructura)
 setupJobsCommands(program);
 
-// Helper function to create deprecated command aliases with warnings
-function createDeprecatedAlias(
-  commandName: string,
-  newCommand: string,
-  action: (...args: any[]) => void | Promise<void>,
-  options?: {
-    args?: Array<{ name: string; description: string }>;
-    options?: Array<{ flags: string; description: string; defaultValue?: any; parser?: (value: string) => any }>;
-    description?: string;
-  }
-): void {
-  const cmd = program.command(commandName);
-  
-  if (options?.args) {
-    options.args.forEach(arg => {
-      cmd.argument(arg.name, arg.description);
-    });
-  }
-  
-  if (options?.options) {
-    options.options.forEach(opt => {
-      if (opt.parser) {
-        cmd.option(opt.flags, opt.description, opt.parser, opt.defaultValue);
-      } else if (opt.defaultValue !== undefined) {
-        cmd.option(opt.flags, opt.description, opt.defaultValue);
-      } else {
-        cmd.option(opt.flags, opt.description);
-      }
-    });
-  }
-  
-  if (options?.description) {
-    cmd.description(options.description);
-  }
-  
-  cmd.action((...args: any[]) => {
-    logger.warn(`⚠️  El comando '${commandName}' está deprecado. Por favor usa '${newCommand}' en su lugar.`);
-    return action(...args);
-  });
-}
-
 // Comandos deprecados (mantener compatibilidad hacia atrás)
 createDeprecatedAlias(
+  program,
   "job-info",
   "jobs info",
   jobInfo,
@@ -83,6 +43,7 @@ createDeprecatedAlias(
 );
 
 createDeprecatedAlias(
+  program,
   "job-params",
   "jobs params",
   jobParams,
@@ -93,6 +54,7 @@ createDeprecatedAlias(
 );
 
 createDeprecatedAlias(
+  program,
   "job-steps",
   "jobs steps",
   jobSteps,
@@ -106,6 +68,7 @@ createDeprecatedAlias(
 );
 
 createDeprecatedAlias(
+  program,
   "last-build",
   "jobs last-build",
   lastBuild,
@@ -116,6 +79,7 @@ createDeprecatedAlias(
 );
 
 createDeprecatedAlias(
+  program,
   "build",
   "jobs build",
   build,
@@ -127,6 +91,7 @@ createDeprecatedAlias(
 );
 
 createDeprecatedAlias(
+  program,
   "list-builds",
   "jobs list-builds",
   listBuilds,
@@ -147,6 +112,7 @@ createDeprecatedAlias(
 );
 
 createDeprecatedAlias(
+  program,
   "logs",
   "jobs logs",
   showLogs,
