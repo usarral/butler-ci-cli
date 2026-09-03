@@ -1,6 +1,6 @@
 {
   "name": "butler-ci-cli",
-  "version": "3.0.17",
+  "version": "3.0.18",
   "description": "CLI para interactuar con Jenkins Pipelines",
   "main": "dist/index.js",
   "bin": {
