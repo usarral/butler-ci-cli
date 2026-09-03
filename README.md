@@ -161,6 +161,19 @@ export JENKINS_USER="your-username"
 export JENKINS_TOKEN="your-api-token"
 ```
 
+### Output and logs
+
+By default the CLI prints its output as-is: no `[time] INFO:` prefix in front of
+job trees, summaries or tables. Only `WARN` and `ERROR` keep a visible label.
+
+If you need timestamps for troubleshooting, they are rendered in the **system
+local timezone**:
+
+```bash
+BUTLER_LOG_TIMESTAMPS=1 butler-ci-cli list-jobs   # timestamps at any level
+LOG_LEVEL=debug butler-ci-cli list-jobs           # debug traces + timestamps
+```
+
 ## 🚀 Usage
 
 ### Configuration Commands
