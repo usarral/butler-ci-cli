@@ -174,6 +174,29 @@ BUTLER_LOG_TIMESTAMPS=1 butler-ci-cli list-jobs   # timestamps at any level
 LOG_LEVEL=debug butler-ci-cli list-jobs           # debug traces + timestamps
 ```
 
+### Icons
+
+Output is always written as UTF-8 through the terminal's native text API, so
+accents and icons render correctly on Windows regardless of the active code
+page (`chcp`).
+
+Which icon set is used depends on the terminal:
+
+| Terminal | Icons |
+| --- | --- |
+| macOS / Linux | emoji |
+| Windows Terminal, VS Code, ConEmu, Git Bash | emoji |
+| Classic Windows console (`conhost`) | plain ASCII |
+
+The classic console draws emoji with inconsistent widths, which breaks the
+alignment of job trees and tables, so it gets an ASCII set instead. Override
+the detection with `BUTLER_ICONS`:
+
+```bash
+BUTLER_ICONS=ascii butler-ci-cli config ls   # force plain ASCII
+BUTLER_ICONS=emoji butler-ci-cli config ls   # force emoji
+```
+
 ## 🚀 Usage
 
 ### Configuration Commands

@@ -20,7 +20,7 @@ export async function listConfigs(): Promise<void> {
     const isActive = configName === currentConfig;
     
     if (config) {
-      const status = isActive ? formatters.success("● ACTIVA") : formatters.secondary("○");
+      const status = isActive ? formatters.success(`${msg.icons.dotActive} ACTIVA`) : formatters.secondary(msg.icons.dotInactive);
       logger.info(`${status} ${formatters.highlight(configName)}`);
       logger.info(`   ${msg.icons.location} ${config.url}`);
       logger.info(`   ${msg.icons.user} ${config.username}`);

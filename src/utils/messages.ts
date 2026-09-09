@@ -2,6 +2,7 @@
  * Mensajes y literales de la aplicación
  * Este archivo centraliza todos los textos para facilitar la internacionalización futura
  */
+import { icons } from './icons';
 
 export const messages = {
   // Errores generales
@@ -57,9 +58,9 @@ export const messages = {
     usingCliParams: 'Usando parámetros proporcionados por CLI',
     openingEditor: (editor: string) => `Abriendo logs en ${editor}`,
     openingInEditor: (editor: string) => `Abriendo logs en ${editor}`,
-    usingDefaultEditor: (editor: string) => `💡 Usando editor: ${editor} (no configurado, usando por defecto)`,
-    noEditorConfigured: '⚠️  No se encontró un editor configurado.',
-    configureEditorHint: '💡 Configura uno con: butler-ci-cli config edit <nombre> --editor <editor>',
+    usingDefaultEditor: (editor: string) => `${icons.idea} Usando editor: ${editor} (no configurado, usando por defecto)`,
+    noEditorConfigured: `${icons.warning}  No se encontró un editor configurado.`,
+    configureEditorHint: `${icons.idea} Configura uno con: butler-ci-cli config edit <nombre> --editor <editor>`,
     editingActiveConfig: (name: string) => `Editando configuración activa: ${name}`,
   },
 
@@ -130,15 +131,15 @@ export const messages = {
 
   // Estados de jobs
   jobStatus: {
-    success: '✅ Exitoso',
-    failed: '❌ Fallido',
-    unstable: '⚠️ Inestable',
-    disabled: '⚪ Deshabilitado',
-    aborted: '🚫 Abortado',
-    running: '🔄 Ejecutándose',
-    runningSuccess: '🔄 Ejecutándose (exitoso)',
-    runningFailed: '🔄 Ejecutándose (fallido)',
-    runningUnstable: '🔄 Ejecutándose (inestable)',
+    success: `${icons.success} Exitoso`,
+    failed: `${icons.error} Fallido`,
+    unstable: `${icons.warning} Inestable`,
+    disabled: `${icons.disabled} Deshabilitado`,
+    aborted: `${icons.aborted} Abortado`,
+    running: `${icons.running} Ejecutándose`,
+    runningSuccess: `${icons.running} Ejecutándose (exitoso)`,
+    runningFailed: `${icons.running} Ejecutándose (fallido)`,
+    runningUnstable: `${icons.running} Ejecutándose (inestable)`,
     yes: 'Sí',
     no: 'No',
   },
@@ -171,34 +172,16 @@ export const messages = {
 
   // Separadores y formato
   formatting: {
-    separator: '━'.repeat(80),
+    separator: icons.separator.repeat(80),
     separator2: '='.repeat(80),
     endOfLogs: (lines: number) => `Fin de los logs (${lines} líneas)`,
   },
 
   // Iconos/emojis
-  icons: {
-    search: '🔍',
-    success: '✅',
-    error: '❌',
-    warning: '⚠️',
-    info: 'ℹ️',
-    rocket: '🚀',
-    folder: '📁',
-    file: '📄',
-    download: '📥',
-    gear: '⚙️',
-    building: '🔨',
-    logs: '📋',
-    list: '📊',
-    user: '👤',
-    location: '📍',
-    description: '📝',
-    check: '✓',
-    cross: '✗',
-    bullet: '•',
-    circle: '🔹',
-  },
+  //
+  // El juego concreto (emoji o ASCII) lo decide `utils/icons`, en función del
+  // terminal y de `BUTLER_ICONS`.
+  icons,
 };
 
 // Helper para acceder a mensajes de forma segura

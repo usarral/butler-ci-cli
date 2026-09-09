@@ -85,7 +85,7 @@ function displayStep(step: any, stepNumber: number) {
   console.log(`    ${stepNumber}. ${step.name} - ${status}${duration}`);
   
   if (step.error) {
-    console.log(`       ${formatters.error(`❌ Error: ${step.error.message}`)}`);
+    console.log(`       ${formatters.error(`${msg.icons.error} Error: ${step.error.message}`)}`);
   }
 }
 
@@ -96,9 +96,9 @@ function getStatusDisplay(status: string): string {
     'FAILURE': msg.jobStatus.failed,
     'UNSTABLE': msg.jobStatus.unstable,
     'ABORTED': msg.jobStatus.aborted,
-    'IN_PROGRESS': formatters.info('🔄 En progreso'),
-    'NOT_EXECUTED': formatters.secondary('⏭️ No ejecutado'),
-    'PAUSED_PENDING_INPUT': formatters.warning('⏸️ Esperando entrada'),
+    'IN_PROGRESS': formatters.info(`${msg.icons.running} En progreso`),
+    'NOT_EXECUTED': formatters.secondary(`${msg.icons.skipped} No ejecutado`),
+    'PAUSED_PENDING_INPUT': formatters.warning(`${msg.icons.paused} Esperando entrada`),
   };
   
   return statusMap[status] || formatters.secondary(status);

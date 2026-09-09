@@ -33,7 +33,7 @@ export async function showFolders(options?: { maxLevel?: number }) {
       levelStats[folder.level] = (levelStats[folder.level] || 0) + 1;
     }
     
-    logger.info("\n📈 Distribución por niveles:");
+    logger.info(`\n${msg.icons.chart} Distribución por niveles:`);
     for (const [level, count] of Object.entries(levelStats)) {
       const levelName = level === '0' ? 'Raíz' : `Nivel ${level}`;
       logger.info(`   ${levelName}: ${formatters.success(count.toString())} carpetas`);
