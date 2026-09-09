@@ -70,6 +70,19 @@ const showTimestamps =
   process.env.BUTLER_LOG_TIMESTAMPS === '1' || level === 'debug' || level === 'trace';
 
 const stream = pretty({
+  // Escribir por `process.stdout` en vez del descriptor 1 directo.
+  //
+  // El destino por defecto de pino-pretty es un sonic-boom sobre el fd 1, que
+  // hace `fs.write` con bytes UTF-8 crudos. En Windows eso salta la conversión
+  // a UTF-16 (`WriteConsoleW`) que Node hace para la consola, así que el
+  // terminal decodifica esos bytes con su página de códigos activa (850/437 en
+  // Windows en español): `📊` salía como `≡ƒôè` y `configuración` como
+  // `configuraci├│n`. Ninguna fuente puede arreglar eso, porque el problema son
+  // los bytes, no los glifos.
+  //
+  // Como efecto secundario, la salida del logger y la de `console.log` van
+  // ahora por el mismo stream, así que ya no pueden intercalarse mal.
+  destination: process.stdout,
   // El color lo aplica `formatters` (chalk), que además respeta TTY y NO_COLOR.
   // Con `colorize: true`, pino-pretty pintaba el mensaje entero de cian y se
   // comía los colores por elemento.

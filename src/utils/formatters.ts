@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { icons } from './icons';
 
 /**
  * Utilidades para formateo y presentación de datos
@@ -65,7 +66,7 @@ export const formatters = {
   /**
    * Formatea un separador
    */
-  separator: (char = '━', length = 80): string => chalk.blue(char.repeat(length)),
+  separator: (char = icons.separator, length = 80): string => chalk.blue(char.repeat(length)),
 
   /**
    * Formatea una URL
@@ -133,13 +134,13 @@ export const formatters = {
   buildStatus: (status: string): string => {
     switch (status) {
       case 'SUCCESS':
-        return chalk.green('✓ SUCCESS');
+        return chalk.green(`${icons.check} SUCCESS`);
       case 'FAILURE':
-        return chalk.red('✗ FAILURE');
+        return chalk.red(`${icons.cross} FAILURE`);
       case 'UNSTABLE':
-        return chalk.yellow('⚠ UNSTABLE');
+        return chalk.yellow(`${icons.unstable} UNSTABLE`);
       case 'ABORTED':
-        return chalk.gray('⊗ ABORTED');
+        return chalk.gray(`${icons.crossHeavy} ABORTED`);
       default:
         return chalk.gray(`? ${status}`);
     }
@@ -192,7 +193,7 @@ export function printHeader(text: string): void {
 /**
  * Imprime un separador simple
  */
-export function printSeparator(char = '━'): void {
+export function printSeparator(char = icons.separator): void {
   console.log(formatters.separator(char));
 }
 

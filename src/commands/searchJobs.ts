@@ -57,18 +57,18 @@ function getJobStatus(color?: string): string {
     case 'red':
       return formatters.error(` ${msg.icons.cross}`);
     case 'yellow':
-      return formatters.warning(" ⚠");
+      return formatters.warning(` ${msg.icons.unstable}`);
     case 'grey':
     case 'disabled':
-      return formatters.secondary(" ⚪");
+      return formatters.secondary(` ${msg.icons.disabled}`);
     case 'aborted':
-      return formatters.error(" 🚫");
+      return formatters.error(` ${msg.icons.aborted}`);
     case 'blue_anime':
-      return formatters.info(" 🔄");
+      return formatters.info(` ${msg.icons.running}`);
     case 'red_anime':
-      return formatters.error(" 🔄");
+      return formatters.error(` ${msg.icons.running}`);
     case 'yellow_anime':
-      return formatters.warning(" 🔄");
+      return formatters.warning(` ${msg.icons.running}`);
     default:
       return "";
   }

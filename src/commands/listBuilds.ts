@@ -52,7 +52,7 @@ export async function listBuilds(jobName: string, options: ListBuildsCommandOpti
     }
     
     // Mostrar encabezado
-    printHeader(`🏗️  Builds de ${jobName}`);
+    printHeader(`${msg.icons.construction}  Builds de ${jobName}`);
     
     // Mostrar información de filtros aplicados
     displayFilterInfo(options);
@@ -113,7 +113,7 @@ function displayBuildsTable(builds: any[]) {
   const durationCol = 'Duración'.padEnd(COL_DURATION_WIDTH);
   
   console.log(formatters.bold(`${numberCol}${statusCol}${dateCol}${durationCol}`));
-  console.log('─'.repeat(62));
+  console.log(msg.icons.rule.repeat(62));
   
   // Filas
   for (const build of builds) {
@@ -157,7 +157,7 @@ function displaySummary(builds: any[], options: ListBuildsCommandOptions) {
 
 function getBuildStatusDisplay(build: any): string {
   if (build.building) {
-    return formatters.info('🔄 En ejecución');
+    return formatters.info(`${msg.icons.running} En ejecución`);
   }
   
   const resultMap: Record<string, string> = {
@@ -165,7 +165,7 @@ function getBuildStatusDisplay(build: any): string {
     'FAILURE': msg.jobStatus.failed,
     'UNSTABLE': msg.jobStatus.unstable,
     'ABORTED': msg.jobStatus.aborted,
-    'NOT_BUILT': '⏭️  No construido',
+    'NOT_BUILT': `${msg.icons.skipped}  No construido`,
   };
   
   return resultMap[build.result] || formatters.secondary(build.result || 'Desconocido');

@@ -47,7 +47,7 @@ export async function build(jobName: string, options: { params?: string }) {
     ]);
     
     if (!confirm) {
-      logger.warn(`\n🚫 ${msg.warnings.buildCancelled}`);
+      logger.warn(`\n${msg.icons.aborted} ${msg.warnings.buildCancelled}`);
       return;
     }
     
@@ -61,7 +61,7 @@ export async function build(jobName: string, options: { params?: string }) {
       logger.info(formatters.secondary(`${msg.icons.location} ${msg.labels.queueUrl}: ${result.queueUrl}`));
     }
     
-    logger.info(formatters.info(`\n💡 Puedes ver el estado del build en: ${formatters.url(jobInfo.url)}`));
+    logger.info(formatters.info(`\n${msg.icons.idea} Puedes ver el estado del build en: ${formatters.url(jobInfo.url)}`));
     
   } catch (error: any) {
     logger.error(`${msg.icons.error} ${error.message}`);

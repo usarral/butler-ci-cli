@@ -35,7 +35,7 @@ async function validateAndGetBuildData(jobName: string) {
 }
 
 function displayBuildHeader(jobData: any, buildData: any, jobName: string) {
-  printHeader(`🏗️  ${msg.labels.buildInfo}`);
+  printHeader(`${msg.icons.construction}  ${msg.labels.buildInfo}`);
   
   const table = new TableBuilder()
     .add('Job:', jobData.fullName || jobName)
@@ -46,7 +46,7 @@ function displayBuildHeader(jobData: any, buildData: any, jobName: string) {
   if (result) {
     table.add(msg.labels.result, getBuildResultDisplay(result));
   } else {
-    table.add(msg.labels.status, formatters.info("🔄 En ejecución"));
+    table.add(msg.labels.status, formatters.info(`${msg.icons.running} En ejecución`));
   }
   
   console.log(table.build());
@@ -98,7 +98,7 @@ function getBuildResultDisplay(result: string): string {
     'FAILURE': msg.jobStatus.failed,
     'UNSTABLE': msg.jobStatus.unstable,
     'ABORTED': msg.jobStatus.aborted,
-    'NOT_BUILT': '⏭️ No construido',
+    'NOT_BUILT': `${msg.icons.skipped} No construido`,
   };
   
   return resultMap[result] || formatters.secondary(result);
@@ -111,16 +111,16 @@ function getCauseDisplay(cause: any): string {
     return `${msg.icons.user} Usuario: ${cause.userId || "Desconocido"}`;
   }
   if (className.includes("TimerTriggerCause")) {
-    return "⏰ Programación temporal";
+    return `${msg.icons.clock} Programación temporal`;
   }
   if (className.includes("SCMTriggerCause")) {
-    return "🔄 Cambio en repositorio";
+    return `${msg.icons.running} Cambio en repositorio`;
   }
   if (className.includes("UpstreamCause")) {
-    return `⬆️ Build padre: ${cause.upstreamProject}#${cause.upstreamBuild}`;
+    return `${msg.icons.upstream} Build padre: ${cause.upstreamProject}#${cause.upstreamBuild}`;
   }
   if (className.includes("BranchEventCause")) {
-    return `🌿 Evento de rama: ${cause.origin || "Desconocido"}`;
+    return `${msg.icons.branch} Evento de rama: ${cause.origin || "Desconocido"}`;
   }
   
   return cause.shortDescription || "Causa desconocida";

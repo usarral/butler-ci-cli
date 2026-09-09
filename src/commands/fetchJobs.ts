@@ -22,7 +22,7 @@ export async function fetchJobs() {
       for (const name of examples) {
         const parts = name.split('/');
         if (parts.length > 1) {
-          logger.info(`   ${msg.icons.folder} ${formatters.info(parts.slice(0, -1).join('/'))} → ${formatters.secondary(parts[parts.length - 1])}`);
+          logger.info(`   ${msg.icons.folder} ${formatters.info(parts.slice(0, -1).join('/'))} ${msg.icons.arrow} ${formatters.secondary(parts[parts.length - 1])}`);
         } else {
           logger.info(`   ${msg.icons.circle} ${formatters.secondary(name)}`);
         }

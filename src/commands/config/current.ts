@@ -19,11 +19,11 @@ export async function showCurrentConfig(): Promise<void> {
     return;
   }
 
-  logger.info(formatters.info(`🎯 Configuración activa\n`));
-  logger.info(`${formatters.success("●")} ${formatters.highlight(config.name)}`);
+  logger.info(formatters.info(`${msg.icons.target} Configuración activa\n`));
+  logger.info(`${formatters.success(msg.icons.dotActive)} ${formatters.highlight(config.name)}`);
   logger.info(`   ${msg.icons.location} ${config.url}`);
   logger.info(`   ${msg.icons.user} ${config.username}`);
-  logger.info(`   🔑 Token: ${"*".repeat(Math.min(config.token.length, 20))}`);
+  logger.info(`   ${msg.icons.key} Token: ${"*".repeat(Math.min(config.token.length, 20))}`);
   if (config.description) {
     logger.info(`   ${msg.icons.description} ${config.description}`);
   }

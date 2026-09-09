@@ -247,6 +247,36 @@ butler-ci-cli logs my-job 42 --download --output /tmp/build.log
 2. Try accessing the URL in a browser
 3. Verify you have network connection
 
+### Icons and accents look like garbage in PowerShell (`≡ƒôè`, `configuraci├│n`)
+
+**Cause:** the CLI used to write its log output straight to file descriptor 1,
+which on Windows bypasses the console's Unicode API. The terminal then decoded
+those UTF-8 bytes with its active code page (850/437 on Spanish Windows). No
+font — not even a Nerd Font — can fix that, because the characters themselves
+are wrong before any glyph is looked up.
+
+**Solution:** update to a version that includes the fix; output now goes
+through `process.stdout`, which uses the native `WriteConsoleW` path.
+
+```bash
+npm update -g butler-ci-cli
+```
+
+### Icons render but the columns are misaligned
+
+**Cause:** the classic Windows console (`conhost`) draws emoji with
+inconsistent widths.
+
+**Solution:** the CLI already falls back to plain ASCII icons there. You can
+force either set:
+
+```bash
+BUTLER_ICONS=ascii butler-ci-cli list-jobs   # plain ASCII
+BUTLER_ICONS=emoji butler-ci-cli list-jobs   # emoji
+```
+
+Or use Windows Terminal, which renders emoji correctly.
+
 ### Error: "Job not found"
 
 **Causes:**
