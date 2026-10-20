@@ -1,17 +1,19 @@
-name: PR CI — Dependency updates
+name: PR CI
 
+# Tests y build en todas las PRs, sin filtrar por ficheros
 on:
   pull_request:
-    paths:
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'package-lock.json'
-      - 'yarn.lock'
-      - '.github/workflows/**'
+
+# Una ejecución nueva de la misma PR cancela la anterior
+concurrency:
+  group: pr-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         node-version: [20, 22, 24]
