@@ -106,6 +106,7 @@ export const messages = {
   // Prompts y preguntas
   prompts: {
     confirmBuild: '¿Confirmas que quieres ejecutar este build?',
+    confirmAbort: (build: number, job: string) => `¿Abortar el build #${build} del job ${job}?`,
     confirmDelete: (name: string) => `¿Estás seguro que quieres eliminar la configuración "${name}"?`,
     selectConfigToDelete: 'Selecciona la configuración a eliminar:',
     configName: 'Nombre de la configuración:',
@@ -168,6 +169,9 @@ export const messages = {
     noParams: 'Este job no tiene parámetros configurados.',
     noJobsFound: 'No se encontraron jobs.',
     buildCancelled: 'Build cancelado.',
+    abortCancelled: 'Operación cancelada: el build sigue en ejecución.',
+    buildNotRunning: (build: number, result: string | null) =>
+      `El build #${build} ya ha terminado${result ? ` (${result})` : ''}: solo se pueden abortar builds en ejecución.`,
   },
 
   // Separadores y formato

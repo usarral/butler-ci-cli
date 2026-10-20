@@ -23,6 +23,7 @@ describe('Command Structure', () => {
       expect(subcommands).toContain('build');
       expect(subcommands).toContain('list-builds');
       expect(subcommands).toContain('logs');
+      expect(subcommands).toContain('abort');
     });
 
     it('should have correct description for jobs info subcommand', () => {

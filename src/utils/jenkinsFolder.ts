@@ -631,3 +631,57 @@ export async function getWorkflowSteps(
     throw new Error(`Error obteniendo pasos del build #${buildNumber} del job ${jobFullName}: ${error.message}`);
   }
 }
+
+/**
+ * Resultado de pedir a Jenkins que aborte un build
+ */
+export interface AbortBuildResult {
+  aborted: boolean;
+  buildNumber: number;
+  message: string;
+}
+
+/**
+ * Aborta un build en ejecución (`POST .../stop`). Si el build ya terminó no hace nada
+ * y lo indica en el resultado. Acepta un número de build o 'latest'.
+ */
+export async function abortBuild(
+  jobFullName: string,
+  buildNumber: number | string
+): Promise<AbortBuildResult> {
+  const requested = String(buildNumber).toLowerCase();
+  const build = await getBuildInfo(
+    jobFullName,
+    requested === 'latest' || requested === 'lastbuild' ? 'lastBuild' : buildNumber
+  );
+
+  if (!build.building) {
+    return {
+      aborted: false,
+      buildNumber: build.number,
+      message: `El build #${build.number} ya ha terminado${build.result ? ` (${build.result})` : ''}: solo se pueden abortar builds en ejecución.`
+    };
+  }
+
+  const jenkins = getJenkinsClient();
+
+  try {
+    const jobPath = jobFullName.replace(/\//g, '/job/');
+    // Jenkins responde con una redirección a la página del build; no hace falta seguirla
+    await jenkins.post(`/job/${jobPath}/${build.number}/stop`, undefined, {
+      maxRedirects: 0,
+      validateStatus: (status) => status >= 200 && status < 400
+    });
+
+    return {
+      aborted: true,
+      buildNumber: build.number,
+      message: `Se ha solicitado abortar el build #${build.number} del job ${jobFullName}. Puede tardar unos segundos en terminar.`
+    };
+  } catch (error: any) {
+    if (error.response?.status === 403) {
+      throw new Error(`Sin permisos para abortar el build #${build.number} del job ${jobFullName} (403).`);
+    }
+    throw new Error(`Error abortando el build #${build.number} del job ${jobFullName}: ${error.message}`);
+  }
+}
