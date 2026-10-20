@@ -15,7 +15,7 @@ const jenkinsConfig = {
   token: 'super-secret-token',
 };
 
-async function connect(options: { readOnly?: boolean; allowCreateConfig?: boolean } = {}) {
+async function connect(options: { readOnly?: boolean; allowCreateConfig?: boolean; userContext?: string } = {}) {
   const server = createMcpServer(options);
   const client = new Client({ name: 'test-client', version: '1.0.0' });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -31,7 +31,7 @@ function text(result: unknown): string {
 describe('MCP server', () => {
   let close: (() => Promise<void>)[] = [];
 
-  async function setup(options: { readOnly?: boolean; allowCreateConfig?: boolean } = {}) {
+  async function setup(options: { readOnly?: boolean; allowCreateConfig?: boolean; userContext?: string } = {}) {
     const { client, server } = await connect(options);
     close.push(() => client.close(), () => server.close());
     return client;
@@ -77,7 +77,7 @@ describe('MCP server', () => {
     const client = await setup();
 
     const { tools } = await client.listTools();
-    expect(tools.find((t) => t.name === 'create_config')?.description).toContain('DESACTIVADA');
+    expect(tools.find((t) => t.name === 'create_config')?.description).toContain('DISABLED');
 
     const result = await client.callTool({
       name: 'create_config',
@@ -93,7 +93,7 @@ describe('MCP server', () => {
   it('create_config funciona con allowCreateConfig', async () => {
     const client = await setup({ allowCreateConfig: true });
     const { tools } = await client.listTools();
-    expect(tools.find((t) => t.name === 'create_config')?.description).not.toContain('DESACTIVADA');
+    expect(tools.find((t) => t.name === 'create_config')?.description).not.toContain('DISABLED');
   });
 
   it('en modo solo lectura las tools que modifican siguen visibles pero fallan indicando --read-only', async () => {
@@ -143,7 +143,7 @@ describe('MCP server', () => {
     const result = await client.callTool({ name: 'search_jobs', arguments: { query: 'x' } });
 
     expect(result.isError).toBe(true);
-    expect(text(result)).toContain('No hay configuración de Jenkins');
+    expect(text(result)).toContain('No active Jenkins environment');
     expect(folder.findJobsByName).not.toHaveBeenCalled();
     expect(exit).not.toHaveBeenCalled();
   });
@@ -200,7 +200,7 @@ describe('MCP server', () => {
     });
 
     expect(folder.getBuildLogs).toHaveBeenCalledWith('app/deploy', 'lastBuild');
-    expect(text(result)).toBe('[... 3 líneas anteriores omitidas ...]\nl4\nl5');
+    expect(text(result)).toBe('[... 3 earlier lines omitted ...]\nl4\nl5');
   });
 
   it('get_build_logs acepta un número de build concreto', async () => {
@@ -378,10 +378,28 @@ describe('MCP server', () => {
 
     const byNumber = await client.callTool({ name: 'abort_build', arguments: { job: 'app/deploy', build: 42 } });
     expect(folder.abortBuild).toHaveBeenLastCalledWith('app/deploy', 42);
-    expect(JSON.parse(text(byNumber))).toEqual({ aborted: true, buildNumber: 42, message: 'ok' });
+    expect(JSON.parse(text(byNumber))).toEqual({
+      aborted: true,
+      buildNumber: 42,
+      message: 'Abort requested for build #42. It may take a few seconds to stop.',
+    });
 
     await client.callTool({ name: 'abort_build', arguments: { job: 'app/deploy', build: 'latest' } });
     expect(folder.abortBuild).toHaveBeenLastCalledWith('app/deploy', 'lastBuild');
+  });
+
+  it('abort_build informa en inglés de que el build ya había terminado', async () => {
+    vi.mocked(folder.abortBuild).mockResolvedValue({ aborted: false, buildNumber: 7, message: 'ya terminó' });
+    const client = await setup();
+
+    const result = await client.callTool({ name: 'abort_build', arguments: { job: 'app/deploy', build: 7 } });
+
+    expect(result.isError).toBeFalsy();
+    expect(JSON.parse(text(result))).toEqual({
+      aborted: false,
+      buildNumber: 7,
+      message: 'Build #7 has already finished; only running builds can be aborted.',
+    });
   });
 
   it('abort_build exige el build: nunca aborta "el último" por omisión', async () => {
@@ -398,6 +416,69 @@ describe('MCP server', () => {
     const tool = (await client.listTools()).tools.find((t) => t.name === 'abort_build');
     expect(tool?.annotations?.destructiveHint).toBe(true);
     expect(tool?.annotations?.readOnlyHint).toBe(false);
+  });
+
+  describe('instructions for the model', () => {
+    const toolNames = async (client: Awaited<ReturnType<typeof setup>>) =>
+      (await client.listTools()).tools.map((t) => t.name);
+
+    it('the server sends instructions to the client', async () => {
+      const client = await setup();
+      const instructions = client.getInstructions() ?? '';
+
+      expect(instructions).toContain('get_config');
+      expect(instructions).toContain('DISABLED');
+      expect(instructions).not.toContain('read-only');
+      expect(instructions.length).toBeLessThan(3000);
+    });
+
+    it('only mention tools that exist', async () => {
+      for (const options of [{}, { readOnly: true }, { allowCreateConfig: true }]) {
+        const client = await setup(options);
+        const names = await toolNames(client);
+        const mentioned = (client.getInstructions() ?? '').match(/\b[a-z]+(?:_[a-z]+)+\b/g) ?? [];
+
+        expect(mentioned.length).toBeGreaterThan(5);
+        for (const tool of new Set(mentioned)) expect(names).toContain(tool);
+      }
+    });
+
+    it('are written in English and ask the model to reply in the user\'s language', async () => {
+      const instructions = (await setup()).getInstructions() ?? '';
+      expect(instructions).toContain('Reply to the user in their language');
+      expect(instructions).not.toMatch(/[áéíóúñ¿¡]/);
+    });
+
+    it('add the installation context written by the user', async () => {
+      const client = await setup({ userContext: 'Deploy to pre with job "platform/deploy" (ENV=pre).' });
+      const instructions = client.getInstructions() ?? '';
+
+      expect(instructions).toContain('Installation context');
+      expect(instructions).toContain('platform/deploy');
+      expect(instructions.indexOf('Installation context')).toBeGreaterThan(instructions.indexOf('Disabled tools'));
+    });
+
+    it('do not add an empty installation context section', async () => {
+      for (const userContext of [undefined, '', '   \n ']) {
+        const client = await setup({ userContext });
+        expect(client.getInstructions()).not.toContain('Installation context');
+      }
+    });
+
+    it('describe the read-only mode', async () => {
+      const client = await setup({ readOnly: true });
+      expect(client.getInstructions()).toContain('This server is read-only');
+    });
+
+    it('only presents create_config as available when it is enabled', async () => {
+      const off = (await setup()).getInstructions() ?? '';
+      const on = (await setup({ allowCreateConfig: true })).getInstructions() ?? '';
+      const readOnlyToo = (await setup({ readOnly: true, allowCreateConfig: true })).getInstructions() ?? '';
+
+      expect(off).not.toContain('create_config adds');
+      expect(on).toContain('create_config adds');
+      expect(readOnlyToo).not.toContain('create_config adds');
+    });
   });
 
   it('follow_build_logs devuelve el siguiente offset', async () => {
