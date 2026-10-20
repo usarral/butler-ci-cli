@@ -36,58 +36,32 @@ git push origin feature/new-command
 
 ## 📋 Configuración inicial
 
-### 1. Crear token de npm
+La publicación usa [Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) (OIDC): GitHub Actions se identifica ante npm sin tokens, así que no hay ningún secreto que caduque o se filtre.
 
-1. Ve a [npmjs.com](https://www.npmjs.com/) e inicia sesión
-2. Accede a tu perfil → Access Tokens
-3. Genera un nuevo token de tipo "Automation"
-4. Copia el token generado
+### Configurar el Trusted Publisher en npm (una sola vez)
 
-### 2. Configurar el token en GitHub
+1. En [npmjs.com](https://www.npmjs.com/) abre el paquete `butler-ci-cli` → **Settings** → **Trusted Publisher**
+2. Elige **GitHub Actions** y rellena:
+   - Organization or user: `usarral`
+   - Repository: `butler-ci-cli`
+   - Workflow filename: `release.yml`
+   - Environment name: vacío
+3. En **Allowed actions** marca **Allow npm publish**. Sin esa casilla el workflow solo puede hacer `npm stage publish`, y cada versión quedaría pendiente de aprobación manual con 2FA
+4. Pulsa **Set up connection**
 
-1. Ve al repositorio en GitHub
-2. Settings → Secrets and variables → Actions
-3. Crea un nuevo secret llamado `NPM_TOKEN`
-4. Pega el token de npm que copiaste anteriormente
+npm solo admite un workflow por paquete: tiene que ser `release.yml`, que es el que publica.
 
-## 🔧 Formas de publicar manualmente
+## 🔧 Formas de publicar
 
 ### Opción 1: Sistema Automático (⭐ Recomendado)
 
-Simplemente haz commit a `master` con formato de conventional commits. El sistema se encarga del resto.
+Simplemente haz merge a `master` con formato de conventional commits. El sistema se encarga del resto.
 
 Ver: [Automated Releases](AUTOMATED_RELEASES.md)
 
-### Opción 2: Mediante Release Manual
+### Opción 2: Relanzar el workflow
 
-1. Actualiza la versión en `package.json`:
-   ```bash
-   npm version patch  # para 1.0.0 -> 1.0.1
-   npm version minor  # para 1.0.0 -> 1.1.0
-   npm version major  # para 1.0.0 -> 2.0.0
-   ```
-
-2. Haz commit y push de los cambios:
-   ```bash
-   git add package.json
-   git commit -m "chore: bump version to vX.X.X"
-   git push
-   ```
-
-3. Crea un nuevo release en GitHub:
-   - Ve a Releases → Draft a new release
-   - Crea un nuevo tag (ej: `v1.0.1`)
-   - Añade título y descripción
-   - Publica el release
-
-4. La GitHub Action se ejecutará automáticamente y publicará en npm
-
-### Opción 3: Manual desde GitHub
-
-1. Ve a Actions → Publish to npm
-2. Haz clic en "Run workflow"
-3. Opcionalmente, especifica una versión (ej: `1.0.1`)
-4. Ejecuta el workflow
+Si una publicación falló, ve a Actions → "Automated Release on Master" → **Run workflow**. Ojo: calcula y sube una versión nueva a partir del último commit.
 
 ## Verificación
 
