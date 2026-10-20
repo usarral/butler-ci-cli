@@ -452,7 +452,7 @@ claude mcp add butler -- npx -y butler-ci-cli mcp
 }
 ```
 
-If you installed it globally, replace `npx -y butler-ci-cli` with `butler-ci-cli`. Add `--read-only` to the command to expose only read tools.
+If you installed it globally, replace `npx -y butler-ci-cli` with `butler-ci-cli`. Add `--read-only` to the command to expose only read tools, or `--enable-create-config` to also expose `create_config`.
 
 ### Tools
 
@@ -460,7 +460,8 @@ If you installed it globally, replace `npx -y butler-ci-cli` with `butler-ci-cli
 |------|-------------|
 | `get_config` | Active environment and all saved ones (never includes tokens) |
 | `use_config` | Switch the active Jenkins environment |
-| `create_config` / `update_config` / `delete_config` | Manage environments (hidden with `--read-only`) |
+| `update_config` / `delete_config` | Modify or remove environments (hidden with `--read-only`) |
+| `create_config` | Create an environment. Disabled by default: enable it with `--enable-create-config` (hidden with `--read-only`) |
 | `search_jobs` / `list_jobs` | Find jobs, list jobs and folders |
 | `get_job_info` / `get_job_params` | Job details and accepted parameters |
 | `get_last_build` / `list_builds` | Build status, filtering and pagination |
@@ -469,8 +470,6 @@ If you installed it globally, replace `npx -y butler-ci-cli` with `butler-ci-cli
 | `get_build_steps` | Pipeline stages and steps |
 | `download_build_logs` | Save a log to `~/.butler-ci-cli/logs` (hidden with `--read-only`) |
 | `trigger_build` | Start a build with parameters (hidden with `--read-only`) |
-
-> `create_config` receives the API token through the conversation. If you prefer to keep it out, use `butler-ci-cli config create` in a terminal.
 
 ## 🗂️ Project Structure
 

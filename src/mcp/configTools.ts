@@ -34,7 +34,10 @@ function publicView(config: JenkinsConfig) {
   };
 }
 
-export function registerConfigTools(server: McpServer, options: { readOnly?: boolean }): void {
+export function registerConfigTools(
+  server: McpServer,
+  options: { readOnly?: boolean; allowCreateConfig?: boolean }
+): void {
   server.registerTool(
     "get_config",
     {
@@ -82,51 +85,51 @@ export function registerConfigTools(server: McpServer, options: { readOnly?: boo
 
   if (options.readOnly) return;
 
-  server.registerTool(
-    "create_config",
-    {
-      title: "Crear un entorno",
-      description:
-        "Guarda un nuevo entorno de Jenkins. Ojo: el token pasa por la conversación; " +
-        "si prefieres evitarlo, usa 'butler-ci-cli config create' en una terminal.",
-      inputSchema: {
-        name: configName,
-        url: jenkinsUrl,
-        username: z.string().min(1).describe("Usuario de Jenkins"),
-        token: z.string().min(1).describe("API token de Jenkins"),
-        description: z.string().optional(),
-        setActive: z.boolean().default(true).describe("Activar el entorno tras crearlo"),
+  if (options.allowCreateConfig) {
+    server.registerTool(
+      "create_config",
+      {
+        title: "Crear un entorno",
+        description: "Guarda un nuevo entorno de Jenkins con su URL, usuario y API token.",
+        inputSchema: {
+          name: configName,
+          url: jenkinsUrl,
+          username: z.string().min(1).describe("Usuario de Jenkins"),
+          token: z.string().min(1).describe("API token de Jenkins"),
+          description: z.string().optional(),
+          setActive: z.boolean().default(true).describe("Activar el entorno tras crearlo"),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      annotations: { readOnlyHint: false, destructiveHint: false },
-    },
-    safe(
-      (args: {
-        name: string;
-        url: string;
-        username: string;
-        token: string;
-        description?: string;
-        setActive: boolean;
-      }) => {
-        if (configManager.listConfigs().includes(args.name)) {
-          return fail(`Ya existe una configuración llamada '${args.name}'. Usa update_config para modificarla.`);
+      safe(
+        (args: {
+          name: string;
+          url: string;
+          username: string;
+          token: string;
+          description?: string;
+          setActive: boolean;
+        }) => {
+          if (configManager.listConfigs().includes(args.name)) {
+            return fail(`Ya existe una configuración llamada '${args.name}'. Usa update_config para modificarla.`);
+          }
+          const config: JenkinsConfig = {
+            name: args.name,
+            url: args.url.trim(),
+            username: args.username.trim(),
+            token: args.token.trim(),
+            description: args.description?.trim() || undefined,
+          };
+          configManager.saveConfig(config);
+          if (args.setActive) {
+            configManager.setCurrentConfig(config.name);
+            resetJenkinsClient();
+          }
+          return json({ created: publicView(config), active: args.setActive });
         }
-        const config: JenkinsConfig = {
-          name: args.name,
-          url: args.url.trim(),
-          username: args.username.trim(),
-          token: args.token.trim(),
-          description: args.description?.trim() || undefined,
-        };
-        configManager.saveConfig(config);
-        if (args.setActive) {
-          configManager.setCurrentConfig(config.name);
-          resetJenkinsClient();
-        }
-        return json({ created: publicView(config), active: args.setActive });
-      }
-    )
-  );
+      )
+    );
+  }
 
   server.registerTool(
     "update_config",

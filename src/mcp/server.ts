@@ -22,6 +22,7 @@ import {
 
 export interface McpServerOptions {
   readOnly?: boolean;
+  allowCreateConfig?: boolean;
 }
 
 const DEFAULT_LOG_LINES = 200;

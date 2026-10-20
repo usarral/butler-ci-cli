@@ -38,8 +38,8 @@ export function guarded<A>(handler: (args: A) => Promise<ToolResult>) {
   return async (args: A): Promise<ToolResult> => {
     if (!getJenkinsConfig()) {
       return fail(
-        "No hay configuración de Jenkins activa. Crea una con la tool create_config " +
-          "o actívala con use_config (o define JENKINS_URL, JENKINS_USER y JENKINS_TOKEN)."
+        "No hay configuración de Jenkins activa. Actívala con la tool use_config " +
+          "(o define JENKINS_URL, JENKINS_USER y JENKINS_TOKEN)."
       );
     }
     return run(args);

@@ -33,10 +33,14 @@ setupJobsCommands(program);
 program
   .command("mcp")
   .description("Iniciar un servidor MCP (stdio) para conectar Claude, OpenCode y otros clientes")
-  .option("--read-only", "No exponer herramientas que modifican Jenkins (trigger_build)")
+  .option("--read-only", "Exponer solo herramientas de lectura (sin lanzar builds, descargar logs ni crear/modificar/borrar entornos)")
+  .option("--enable-create-config", "Exponer create_config (el API token pasa por la conversación)")
   .action(async (options) => {
     const { startMcpServer } = await import("./mcp/server");
-    await startMcpServer({ readOnly: Boolean(options.readOnly) });
+    await startMcpServer({
+      readOnly: Boolean(options.readOnly),
+      allowCreateConfig: Boolean(options.enableCreateConfig),
+    });
   });
 
 // Comandos deprecados (mantener compatibilidad hacia atrás)

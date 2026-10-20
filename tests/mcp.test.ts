@@ -15,7 +15,7 @@ const jenkinsConfig = {
   token: 'super-secret-token',
 };
 
-async function connect(options: { readOnly?: boolean } = {}) {
+async function connect(options: { readOnly?: boolean; allowCreateConfig?: boolean } = {}) {
   const server = createMcpServer(options);
   const client = new Client({ name: 'test-client', version: '1.0.0' });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -31,7 +31,7 @@ function text(result: unknown): string {
 describe('MCP server', () => {
   let close: (() => Promise<void>)[] = [];
 
-  async function setup(options: { readOnly?: boolean } = {}) {
+  async function setup(options: { readOnly?: boolean; allowCreateConfig?: boolean } = {}) {
     const { client, server } = await connect(options);
     close.push(() => client.close(), () => server.close());
     return client;
@@ -52,7 +52,6 @@ describe('MCP server', () => {
     const client = await setup();
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([
-      'create_config',
       'delete_config',
       'download_build_logs',
       'follow_build_logs',
@@ -69,6 +68,19 @@ describe('MCP server', () => {
       'update_config',
       'use_config',
     ]);
+  });
+
+  it('create_config está desactivada por defecto y se activa con allowCreateConfig', async () => {
+    const byDefault = await setup();
+    expect((await byDefault.listTools()).tools.map((t) => t.name)).not.toContain('create_config');
+
+    const enabled = await setup({ allowCreateConfig: true });
+    expect((await enabled.listTools()).tools.map((t) => t.name)).toContain('create_config');
+  });
+
+  it('allowCreateConfig no anula el modo solo lectura', async () => {
+    const client = await setup({ readOnly: true, allowCreateConfig: true });
+    expect((await client.listTools()).tools.map((t) => t.name)).not.toContain('create_config');
   });
 
   it('en modo solo lectura oculta las tools que modifican Jenkins, ficheros o configuraciones', async () => {
@@ -248,7 +260,7 @@ describe('MCP server', () => {
     it('create_config guarda, activa y no devuelve el token', async () => {
       const save = vi.spyOn(config.configManager, 'saveConfig').mockImplementation(() => undefined);
       const setCurrent = vi.spyOn(config.configManager, 'setCurrentConfig').mockReturnValue(true);
-      const client = await setup();
+      const client = await setup({ allowCreateConfig: true });
 
       const result = await client.callTool({
         name: 'create_config',
@@ -268,7 +280,7 @@ describe('MCP server', () => {
 
     it('create_config no sobrescribe un entorno existente', async () => {
       const save = vi.spyOn(config.configManager, 'saveConfig');
-      const client = await setup();
+      const client = await setup({ allowCreateConfig: true });
 
       const result = await client.callTool({
         name: 'create_config',
@@ -281,7 +293,7 @@ describe('MCP server', () => {
 
     it('create_config rechaza URLs que no son http(s)', async () => {
       const save = vi.spyOn(config.configManager, 'saveConfig');
-      const client = await setup();
+      const client = await setup({ allowCreateConfig: true });
 
       const result = await client.callTool({
         name: 'create_config',
