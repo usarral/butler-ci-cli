@@ -178,6 +178,15 @@ describe("myCommand", () => {
 });
 ```
 
+### Pinned Versions
+
+For supply-chain safety, nothing floats:
+
+- **npm dependencies** in `package.json` use exact versions (no `^` or `~`). `.npmrc` sets `save-exact=true`, so `pnpm add <pkg>` pins automatically. Keep both lockfiles in sync (`pnpm-lock.yaml` and `package-lock.json`).
+- **GitHub Actions** are pinned to a full commit SHA, with the release in a trailing comment (`uses: actions/checkout@<sha> # v7.0.1`). Never use a tag or branch such as `@v7`.
+
+Renovate keeps both up to date and updates the SHAs and comments, so don't bump them by hand.
+
 ### Running Tests
 
 ```bash
