@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { configManager, getJenkinsConfig, type JenkinsConfig } from "../utils/config";
 import { resetJenkinsClient } from "../utils/jenkinsClient";
-import { fail, json, safe } from "./helpers";
+import { fail, json, registerDisabledTool, safe, WITHOUT_READ_ONLY } from "./helpers";
 
 // El nombre se usa para construir la ruta del fichero: se restringe para evitar '../'.
 const configName = z
@@ -83,9 +83,7 @@ export function registerConfigTools(
     })
   );
 
-  if (options.readOnly) return;
-
-  if (options.allowCreateConfig) {
+  if (options.allowCreateConfig && !options.readOnly) {
     server.registerTool(
       "create_config",
       {
@@ -129,6 +127,21 @@ export function registerConfigTools(
         }
       )
     );
+  } else {
+    registerDisabledTool(
+      server,
+      "create_config",
+      "crear entornos de Jenkins",
+      options.readOnly
+        ? `${WITHOUT_READ_ONLY} y con --enable-create-config`
+        : "el usuario debe añadir --enable-create-config al comando 'butler-ci-cli mcp' y reiniciar el servidor"
+    );
+  }
+
+  if (options.readOnly) {
+    registerDisabledTool(server, "update_config", "modificar entornos de Jenkins", WITHOUT_READ_ONLY);
+    registerDisabledTool(server, "delete_config", "eliminar entornos de Jenkins", WITHOUT_READ_ONLY);
+    return;
   }
 
   server.registerTool(

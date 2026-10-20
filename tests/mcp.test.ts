@@ -52,6 +52,7 @@ describe('MCP server', () => {
     const client = await setup();
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([
+      'create_config',
       'delete_config',
       'download_build_logs',
       'follow_build_logs',
@@ -70,26 +71,51 @@ describe('MCP server', () => {
     ]);
   });
 
-  it('create_config está desactivada por defecto y se activa con allowCreateConfig', async () => {
-    const byDefault = await setup();
-    expect((await byDefault.listTools()).tools.map((t) => t.name)).not.toContain('create_config');
+  it('create_config está visible pero desactivada por defecto, y explica cómo activarla', async () => {
+    const save = vi.spyOn(config.configManager, 'saveConfig');
+    const client = await setup();
 
-    const enabled = await setup({ allowCreateConfig: true });
-    expect((await enabled.listTools()).tools.map((t) => t.name)).toContain('create_config');
+    const { tools } = await client.listTools();
+    expect(tools.find((t) => t.name === 'create_config')?.description).toContain('DESACTIVADA');
+
+    const result = await client.callTool({
+      name: 'create_config',
+      arguments: { name: 'Indra', url: 'https://jenkins.example.com', username: 'u', token: 't' },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(text(result)).toContain('--enable-create-config');
+    expect(text(result)).not.toContain('--read-only');
+    expect(save).not.toHaveBeenCalled();
   });
 
-  it('allowCreateConfig no anula el modo solo lectura', async () => {
+  it('create_config funciona con allowCreateConfig', async () => {
+    const client = await setup({ allowCreateConfig: true });
+    const { tools } = await client.listTools();
+    expect(tools.find((t) => t.name === 'create_config')?.description).not.toContain('DESACTIVADA');
+  });
+
+  it('en modo solo lectura las tools que modifican siguen visibles pero fallan indicando --read-only', async () => {
+    const save = vi.spyOn(config.configManager, 'saveConfig');
+    const del = vi.spyOn(config.configManager, 'deleteConfig');
     const client = await setup({ readOnly: true, allowCreateConfig: true });
-    expect((await client.listTools()).tools.map((t) => t.name)).not.toContain('create_config');
-  });
 
-  it('en modo solo lectura oculta las tools que modifican Jenkins, ficheros o configuraciones', async () => {
-    const client = await setup({ readOnly: true });
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
-    for (const hidden of ['trigger_build', 'download_build_logs', 'create_config', 'update_config', 'delete_config']) {
-      expect(names).not.toContain(hidden);
+    for (const gated of ['trigger_build', 'download_build_logs', 'create_config', 'update_config', 'delete_config']) {
+      expect(names).toContain(gated);
+      const result = await client.callTool({ name: gated, arguments: { job: 'j', name: 'n' } });
+      expect(result.isError).toBe(true);
+      expect(text(result)).toContain('--read-only');
     }
+
+    expect(folder.buildJob).not.toHaveBeenCalled();
+    expect(folder.downloadBuildLogs).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
+    expect(del).not.toHaveBeenCalled();
+
+    const create = await client.callTool({ name: 'create_config', arguments: {} });
+    expect(text(create)).toContain('--enable-create-config');
     expect(names).toContain('use_config');
   });
 

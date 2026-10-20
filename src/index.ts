@@ -33,7 +33,7 @@ setupJobsCommands(program);
 program
   .command("mcp")
   .description("Iniciar un servidor MCP (stdio) para conectar Claude, OpenCode y otros clientes")
-  .option("--read-only", "Exponer solo herramientas de lectura (sin lanzar builds, descargar logs ni crear/modificar/borrar entornos)")
+  .option("--read-only", "Modo solo lectura: las herramientas que lanzan builds, escriben logs o crean/modifican/borran entornos responden con un error")
   .option("--enable-create-config", "Exponer create_config (el API token pasa por la conversación)")
   .action(async (options) => {
     const { startMcpServer } = await import("./mcp/server");

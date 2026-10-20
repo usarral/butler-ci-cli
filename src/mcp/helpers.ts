@@ -1,3 +1,5 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 import { getJenkinsConfig } from "../utils/config";
 
 export type ToolResult = { content: { type: "text"; text: string }[]; isError?: boolean };
@@ -44,4 +46,27 @@ export function guarded<A>(handler: (args: A) => Promise<ToolResult>) {
     }
     return run(args);
   };
+}
+
+export const WITHOUT_READ_ONLY = "el usuario debe reiniciar el servidor MCP sin la opción --read-only";
+
+/**
+ * Registra una tool desactivada que sigue siendo visible: los modelos pequeños
+ * no deducen que algo existe pero está apagado, y acaban probando otras tools.
+ */
+export function registerDisabledTool(server: McpServer, name: string, purpose: string, enableWith: string): void {
+  server.registerTool(
+    name,
+    {
+      title: `${name} (desactivada)`,
+      description: `DESACTIVADA en este servidor (${purpose}). Si la llamas, devuelve un error que explica cómo activarla.`,
+      inputSchema: z.object({}).passthrough(),
+      annotations: { readOnlyHint: true },
+    },
+    async () =>
+      fail(
+        `${name} está desactivada en este servidor MCP (${purpose}). ` +
+          `Para activarla, ${enableWith}. No la sustituyas por otras herramientas.`
+      )
+  );
 }
