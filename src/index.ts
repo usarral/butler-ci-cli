@@ -35,11 +35,15 @@ program
   .description("Iniciar un servidor MCP (stdio) para conectar Claude, OpenCode y otros clientes")
   .option("--read-only", "Modo solo lectura: las herramientas que lanzan builds, escriben logs o crean/modifican/borran entornos responden con un error")
   .option("--enable-create-config", "Exponer create_config (el API token pasa por la conversación)")
+  .option("--context <text>", "Contexto sobre tu Jenkins para el modelo (qué jobs usar, el flujo…)")
+  .option("--context-file <path>", "Fichero con ese contexto (además de ~/.butler-ci-cli/context.md, que se carga si existe)")
   .action(async (options) => {
     const { startMcpServer } = await import("./mcp/server");
     await startMcpServer({
       readOnly: Boolean(options.readOnly),
       allowCreateConfig: Boolean(options.enableCreateConfig),
+      context: options.context,
+      contextFile: options.contextFile,
     });
   });
 

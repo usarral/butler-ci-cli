@@ -467,7 +467,29 @@ If you installed it globally, replace `npx -y butler-ci-cli` with `butler-ci-cli
 
 ### Instructions for the model
 
-On connect, the server sends usage instructions to the client (the MCP `instructions` field), which clients add to the model's context: how to pick the Jenkins environment, how to find job paths, how to diagnose a failed build, which tools have real effects and how to read the ones marked as disabled. The text adapts to `--read-only` and `--enable-create-config`.
+On connect, the server sends usage instructions to the client (the MCP `instructions` field), which clients add to the model's context: how to pick the Jenkins environment, how to find job paths, how to diagnose a failed build, which tools have real effects and how to read the ones marked as disabled. The text adapts to `--read-only` and `--enable-create-config`. Everything the model sees from this server (instructions, tool descriptions, errors) is in English, which keeps the context smaller; the model still answers in the user's language.
+
+### Telling the model about your Jenkins
+
+The model cannot know which job deploys what, which parameters you always use or what your flow looks like. Write it down and the server adds it to the instructions, under "Installation context". There are three sources, combined in this order:
+
+1. `~/.butler-ci-cli/context.md`: loaded automatically if it exists.
+2. `--context-file <path>`: any other file.
+3. `--context "<text>"`: inline text.
+
+```markdown
+<!-- ~/.butler-ci-cli/context.md -->
+Production deploys: run job "platform/deploy" with ENV=prod, after "platform/build" succeeded.
+Release flow: build -> deploy to pre -> smoke tests -> deploy to prod.
+Never trigger anything on the "prod" environment without asking me first.
+When environment "staging" is active, use the jobs under "sandbox/".
+```
+
+```bash
+claude mcp add butler -- butler-ci-cli mcp --context-file ~/jenkins-context.md
+```
+
+The context is read when the server starts, so restart it (or reconnect the client) after editing. Instructions are sent once per connection, so if you switch environments mid-session, the text can't change: mention the environment by name, as in the last line above, and the model will check which one is active. It goes into the model's context on every conversation, so it is capped at 8,000 characters (longer text is truncated and a warning is printed to stderr). Keep it short and don't put secrets in it.
 
 ### Tools
 

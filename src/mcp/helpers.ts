@@ -40,15 +40,15 @@ export function guarded<A>(handler: (args: A) => Promise<ToolResult>) {
   return async (args: A): Promise<ToolResult> => {
     if (!getJenkinsConfig()) {
       return fail(
-        "No hay configuración de Jenkins activa. Actívala con la tool use_config " +
-          "(o define JENKINS_URL, JENKINS_USER y JENKINS_TOKEN)."
+        "No active Jenkins environment. Activate one with the use_config tool " +
+          "(or set JENKINS_URL, JENKINS_USER and JENKINS_TOKEN)."
       );
     }
     return run(args);
   };
 }
 
-export const WITHOUT_READ_ONLY = "el usuario debe reiniciar el servidor MCP sin la opción --read-only";
+export const WITHOUT_READ_ONLY = "the user must restart the MCP server without the --read-only option";
 
 /**
  * Registra una tool desactivada que sigue siendo visible: los modelos pequeños
@@ -58,15 +58,15 @@ export function registerDisabledTool(server: McpServer, name: string, purpose: s
   server.registerTool(
     name,
     {
-      title: `${name} (desactivada)`,
-      description: `DESACTIVADA en este servidor (${purpose}). Si la llamas, devuelve un error que explica cómo activarla.`,
+      title: `${name} (disabled)`,
+      description: `DISABLED on this server (${purpose}). Calling it returns an error explaining how to enable it.`,
       inputSchema: z.object({}).passthrough(),
       annotations: { readOnlyHint: true },
     },
     async () =>
       fail(
-        `${name} está desactivada en este servidor MCP (${purpose}). ` +
-          `Para activarla, ${enableWith}. No la sustituyas por otras herramientas.`
+        `${name} is disabled on this MCP server (${purpose}). ` +
+          `To enable it, ${enableWith}. Do not replace it with other tools.`
       )
   );
 }

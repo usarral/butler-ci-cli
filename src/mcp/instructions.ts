@@ -1,43 +1,56 @@
 export interface InstructionsOptions {
   readOnly?: boolean;
   allowCreateConfig?: boolean;
+  /** Contexto escrito por el dueño de la instalación (ver context.ts). */
+  userContext?: string;
 }
 
 /**
  * Instrucciones que el servidor envía al cliente MCP al conectarse. Se añaden al
- * contexto del modelo, así que deben ser breves y coincidir con las tools reales.
+ * contexto del modelo, así que van en inglés (menos tokens) y deben ser breves y
+ * coincidir con las tools reales.
  */
 export function buildInstructions(options: InstructionsOptions = {}): string {
   const readOnly = Boolean(options.readOnly);
   const canCreate = Boolean(options.allowCreateConfig) && !readOnly;
 
   const lines = [
-    "Servidor MCP de Butler CI CLI para consultar y operar Jenkins.",
+    "Butler CI CLI MCP server: query and operate Jenkins.",
     "",
-    "Entorno",
-    "- Todas las herramientas actúan sobre el entorno de Jenkins activo. Empieza con get_config para ver cuál es y qué entornos hay guardados; cambia con use_config.",
-    "- Si no hay entorno activo, pide al usuario que elija uno de los guardados.",
-    ...(canCreate ? ["- create_config crea un entorno nuevo; recibe el API token por la conversación, úsala solo si el usuario te lo pide."] : []),
-    "- Si una búsqueda o un listado vuelve vacío sin motivo, comprueba get_config: puede ser el entorno equivocado o credenciales inválidas.",
+    "Environment",
+    "- Every tool acts on the active Jenkins environment. Start with get_config to see the active one and the saved ones; switch with use_config.",
+    "- If none is active, ask the user which saved environment to use.",
+    ...(canCreate ? ["- create_config adds a new environment; it receives the API token through the conversation, so use it only when the user asks."] : []),
+    "- If a search or list comes back empty unexpectedly, check get_config: a wrong environment or invalid credentials are the usual cause.",
     "",
-    "Jobs y builds",
-    '- Un job se identifica por su ruta completa, con "/" entre carpetas (p. ej. "backend/api-service/deploy"). No la adivines: localízala con search_jobs o list_jobs.',
-    '- El parámetro build acepta un número o "latest".',
-    "- Para diagnosticar un fallo: get_last_build o list_builds (status FAILURE), después get_build_steps para ver qué stage falló y get_build_logs, que devuelve las últimas líneas, donde suele estar el error (sube tailLines si hace falta).",
-    "- Para un build en ejecución usa follow_build_logs: empieza con start=0 y repite con el nextStart devuelto mientras hasMore sea true.",
+    "Jobs and builds",
+    '- A job is identified by its full path with "/" between folders (e.g. "backend/api-service/deploy"). Do not guess it: find it with search_jobs or list_jobs.',
+    '- The build parameter takes a number or "latest".',
+    "- To diagnose a failure: get_last_build or list_builds (status FAILURE), then get_build_steps to see which stage failed and get_build_logs, which returns the last lines, where the error usually is (raise tailLines if needed).",
+    "- For a running build use follow_build_logs: start with start=0 and repeat with the returned nextStart while hasMore is true.",
     "",
-    "Acciones con efectos",
-    "- trigger_build y abort_build actúan sobre Jenkins de verdad. Antes de lanzar un build consulta get_job_params y usa esos nombres de parámetros; antes de abortar, comprueba el número de build. Confirma con el usuario y no las encadenes por tu cuenta.",
-    "- delete_config borra un entorno de forma permanente: confirma antes. update_config modifica los guardados.",
-    "- Las herramientas nunca devuelven tokens.",
+    "Actions with side effects",
+    "- trigger_build and abort_build act on Jenkins for real. Before triggering, call get_job_params and use exactly those parameter names; before aborting, verify the build number. Confirm with the user and do not chain them on your own.",
+    "- delete_config permanently removes an environment: confirm first. update_config edits saved ones.",
+    "- Tools never return tokens.",
     "",
-    "Herramientas desactivadas",
-    "- Las marcadas como DESACTIVADA devuelven un error que indica qué opción las activa. No las sustituyas por otras herramientas: explícaselo al usuario.",
+    "Disabled tools",
+    "- Tools marked DISABLED return an error saying which option enables them. Do not work around them with other tools: tell the user.",
+    ...(readOnly
+      ? ["- This server is read-only: trigger_build, abort_build, download_build_logs, create_config, update_config and delete_config are disabled. use_config still works."]
+      : []),
+    "",
+    "Reply to the user in their language.",
   ];
 
-  if (readOnly) {
+  const userContext = options.userContext?.trim();
+  if (userContext) {
     lines.push(
-      "- Este servidor está en modo solo lectura: trigger_build, abort_build, download_build_logs, create_config, update_config y delete_config están desactivadas. use_config sigue disponible."
+      "",
+      "Installation context",
+      "Written by the owner of this Jenkins installation. Prefer it over your own assumptions about which jobs, parameters and flow to use. It may refer to environments by name: check get_config for the active one.",
+      "",
+      userContext
     );
   }
 

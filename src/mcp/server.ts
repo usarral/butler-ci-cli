@@ -5,6 +5,7 @@ import { routeLogsToStderr } from "../utils/logger";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { registerConfigTools } from "./configTools";
+import { resolveUserContext } from "./context";
 import { buildInstructions } from "./instructions";
 import { guarded, json, registerDisabledTool, text, WITHOUT_READ_ONLY } from "./helpers";
 import {
@@ -25,6 +26,15 @@ import {
 export interface McpServerOptions {
   readOnly?: boolean;
   allowCreateConfig?: boolean;
+  /** Contexto ya resuelto que se añade a las instrucciones del modelo. */
+  userContext?: string;
+}
+
+export interface StartOptions extends McpServerOptions {
+  /** Texto de contexto pasado por --context. */
+  context?: string;
+  /** Ruta de contexto pasada por --context-file. */
+  contextFile?: string;
 }
 
 const DEFAULT_LOG_LINES = 200;
@@ -33,11 +43,11 @@ const MAX_LOG_LINES = 2000;
 const jobName = z
   .string()
   .min(1)
-  .describe("Nombre completo del job, con carpetas separadas por '/' (p. ej. 'folder/subfolder/job')");
+  .describe("Full job name, with folders separated by '/' (e.g. 'folder/subfolder/job')");
 
 const buildRef = z
   .union([z.number().int().positive(), z.literal("latest")])
-  .describe("Número de build o 'latest' para el más reciente");
+  .describe("Build number, or 'latest' for the most recent one");
 
 function packageVersion(): string {
   try {
@@ -59,9 +69,9 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   server.registerTool(
     "search_jobs",
     {
-      title: "Buscar jobs",
-      description: "Busca jobs por nombre (coincidencia parcial, sin distinguir mayúsculas) en todas las carpetas.",
-      inputSchema: { query: z.string().min(1).describe("Texto a buscar en el nombre o la ruta del job") },
+      title: "Search jobs",
+      description: "Search jobs by name (partial, case-insensitive match) across all folders.",
+      inputSchema: { query: z.string().min(1).describe("Text to look for in the job name or path") },
       annotations: readOnly,
     },
     guarded(async ({ query }: { query: string }) => json(await findJobsByName(query)))
@@ -70,12 +80,12 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   server.registerTool(
     "list_jobs",
     {
-      title: "Listar jobs y carpetas",
-      description: "Lista jobs y carpetas de forma recursiva, opcionalmente a partir de una carpeta.",
+      title: "List jobs and folders",
+      description: "Recursively list jobs and folders, optionally starting from a folder.",
       inputSchema: {
-        folder: z.string().optional().describe("Carpeta desde la que listar; por defecto la raíz"),
-        maxLevel: z.number().int().min(0).optional().describe("Profundidad máxima (0 = solo el primer nivel)"),
-        type: z.enum(["job", "folder"]).optional().describe("Filtrar por tipo de elemento"),
+        folder: z.string().optional().describe("Folder to list from; defaults to the root"),
+        maxLevel: z.number().int().min(0).optional().describe("Maximum depth (0 = first level only)"),
+        type: z.enum(["job", "folder"]).optional().describe("Filter by item type"),
       },
       annotations: readOnly,
     },
@@ -91,8 +101,8 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   server.registerTool(
     "get_job_info",
     {
-      title: "Información de un job",
-      description: "Información detallada de un job (estado, builds recientes, propiedades).",
+      title: "Job information",
+      description: "Detailed information about a job (status, recent builds, properties).",
       inputSchema: { job: jobName },
       annotations: readOnly,
     },
@@ -102,8 +112,8 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   server.registerTool(
     "get_job_params",
     {
-      title: "Parámetros de un job",
-      description: "Parámetros que acepta un job: nombre, tipo, valor por defecto y opciones.",
+      title: "Job parameters",
+      description: "Parameters a job accepts: name, type, default value and choices.",
       inputSchema: { job: jobName },
       annotations: readOnly,
     },
@@ -113,8 +123,8 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   server.registerTool(
     "get_last_build",
     {
-      title: "Último build",
-      description: "Información del último build de un job.",
+      title: "Last build",
+      description: "Information about the last build of a job.",
       inputSchema: { job: jobName },
       annotations: readOnly,
     },
@@ -124,17 +134,17 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   server.registerTool(
     "list_builds",
     {
-      title: "Listar builds",
-      description: "Lista los builds de un job con filtro por estado y paginación.",
+      title: "List builds",
+      description: "List a job's builds, with status filter and pagination.",
       inputSchema: {
         job: jobName,
         status: z
           .enum(["SUCCESS", "FAILURE", "UNSTABLE", "ABORTED", "RUNNING"])
           .optional()
-          .describe("Filtrar por estado"),
-        limit: z.number().int().min(1).max(200).default(20).describe("Máximo de builds a devolver"),
-        offset: z.number().int().min(0).default(0).describe("Builds a omitir"),
-        order: z.enum(["asc", "desc"]).default("desc").describe("Orden por número de build"),
+          .describe("Filter by status"),
+        limit: z.number().int().min(1).max(200).default(20).describe("Maximum number of builds to return"),
+        offset: z.number().int().min(0).default(0).describe("Number of builds to skip"),
+        order: z.enum(["asc", "desc"]).default("desc").describe("Order by build number"),
       },
       annotations: readOnly,
     },
@@ -158,9 +168,9 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   server.registerTool(
     "get_build_logs",
     {
-      title: "Logs de un build",
+      title: "Build logs",
       description:
-        "Devuelve las últimas líneas del log de consola de un build. Para ver más, aumenta tailLines.",
+        "Return the last lines of a build's console log. Raise tailLines to see more.",
       inputSchema: {
         job: jobName,
         build: buildRef.default("latest"),
@@ -170,7 +180,7 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
           .min(1)
           .max(MAX_LOG_LINES)
           .default(DEFAULT_LOG_LINES)
-          .describe("Número de líneas finales a devolver"),
+          .describe("Number of final lines to return"),
       },
       annotations: readOnly,
     },
@@ -178,7 +188,7 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
       const lines = (await getBuildLogs(job, build === "latest" ? "lastBuild" : build)).split(/\r?\n/);
       const tail = lines.slice(-tailLines);
       const omitted = lines.length - tail.length;
-      const header = omitted > 0 ? `[... ${omitted} líneas anteriores omitidas ...]\n` : "";
+      const header = omitted > 0 ? `[... ${omitted} earlier lines omitted ...]\n` : "";
       return text(header + tail.join("\n"));
     })
   );
@@ -186,14 +196,14 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   server.registerTool(
     "follow_build_logs",
     {
-      title: "Seguir el log de un build en curso",
+      title: "Follow the log of a running build",
       description:
-        "Lectura incremental del log (equivale al modo streaming del CLI). Empieza con start=0 y en cada " +
-        "llamada siguiente pasa el 'nextStart' devuelto; repite mientras 'hasMore' sea true.",
+        "Incremental log reading (the equivalent of the CLI's streaming mode). Start with start=0 and pass the " +
+        "returned 'nextStart' on each following call; repeat while 'hasMore' is true.",
       inputSchema: {
         job: jobName,
         build: buildRef.default("latest"),
-        start: z.number().int().min(0).default(0).describe("Offset en bytes desde el que leer"),
+        start: z.number().int().min(0).default(0).describe("Byte offset to read from"),
       },
       annotations: readOnly,
     },
@@ -206,8 +216,8 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   server.registerTool(
     "get_build_steps",
     {
-      title: "Stages y steps de un build",
-      description: "Stages y steps de un build de pipeline, con estado y duración.",
+      title: "Build stages and steps",
+      description: "Stages and steps of a pipeline build, with status and duration.",
       inputSchema: { job: jobName, build: buildRef.default("latest") },
       annotations: readOnly,
     },
@@ -217,16 +227,16 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   );
 
   if (options.readOnly) {
-    registerDisabledTool(server, "download_build_logs", "guardar logs en disco", WITHOUT_READ_ONLY);
-    registerDisabledTool(server, "trigger_build", "lanzar builds en Jenkins", WITHOUT_READ_ONLY);
-    registerDisabledTool(server, "abort_build", "abortar builds en ejecución", WITHOUT_READ_ONLY);
+    registerDisabledTool(server, "download_build_logs", "save logs to disk", WITHOUT_READ_ONLY);
+    registerDisabledTool(server, "trigger_build", "trigger builds in Jenkins", WITHOUT_READ_ONLY);
+    registerDisabledTool(server, "abort_build", "abort running builds", WITHOUT_READ_ONLY);
   } else {
     server.registerTool(
       "download_build_logs",
       {
-        title: "Descargar el log de un build",
+        title: "Download a build log",
         description:
-          "Guarda el log completo en el directorio de logs de butler-ci-cli (~/.butler-ci-cli/logs) y devuelve la ruta.",
+          "Save the full log to butler-ci-cli's logs directory (~/.butler-ci-cli/logs) and return the path.",
         inputSchema: { job: jobName, build: buildRef.default("latest") },
         annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
       },
@@ -238,15 +248,15 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
     server.registerTool(
       "trigger_build",
       {
-        title: "Lanzar un build",
+        title: "Trigger a build",
         description:
-          "Lanza un build en Jenkins. Tiene efectos reales: consulta antes get_job_params y confirma con el usuario.",
+          "Trigger a build in Jenkins. It has real effects: call get_job_params first and confirm with the user.",
         inputSchema: {
           job: jobName,
           parameters: z
             .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
             .optional()
-            .describe("Parámetros del build como pares clave-valor"),
+            .describe("Build parameters as key-value pairs"),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
       },
@@ -258,28 +268,42 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
     server.registerTool(
       "abort_build",
       {
-        title: "Abortar un build en ejecución",
+        title: "Abort a running build",
         description:
-          "Aborta un build que está en ejecución. Detiene trabajo real en Jenkins: indica el número de build " +
-          "(consúltalo con list_builds o get_last_build) y confirma con el usuario antes de llamarla. " +
-          "Si el build ya terminó no hace nada y lo indica.",
+          "Abort a build that is currently running. It stops real work in Jenkins: pass the build number " +
+          "(look it up with list_builds or get_last_build) and confirm with the user before calling it. " +
+          "If the build already finished it does nothing and says so.",
         inputSchema: { job: jobName, build: buildRef },
         annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
       },
-      guarded(async ({ job, build }: { job: string; build: number | "latest" }) =>
-        json(await abortBuild(job, build === "latest" ? "lastBuild" : build))
-      )
+      guarded(async ({ job, build }: { job: string; build: number | "latest" }) => {
+        const result = await abortBuild(job, build === "latest" ? "lastBuild" : build);
+        return json({
+          aborted: result.aborted,
+          buildNumber: result.buildNumber,
+          message: result.aborted
+            ? `Abort requested for build #${result.buildNumber}. It may take a few seconds to stop.`
+            : `Build #${result.buildNumber} has already finished; only running builds can be aborted.`,
+        });
+      })
     );
   }
 
   return server;
 }
 
-export async function startMcpServer(options: McpServerOptions = {}): Promise<void> {
+export async function startMcpServer(options: StartOptions = {}): Promise<void> {
   routeLogsToStderr();
-  const server = createMcpServer(options);
+  const { text: userContext, warnings } = resolveUserContext(options);
+  for (const warning of warnings) process.stderr.write(`butler-ci-cli MCP: ${warning}\n`);
+
+  const server = createMcpServer({ ...options, userContext });
   await server.connect(new StdioServerTransport());
-  process.stderr.write(
-    `butler-ci-cli MCP server listo (stdio${options.readOnly ? ", solo lectura" : ""})\n`
-  );
+
+  const mode = [
+    "stdio",
+    ...(options.readOnly ? ["read-only"] : []),
+    ...(userContext ? [`user context: ${userContext.length} chars`] : []),
+  ].join(", ");
+  process.stderr.write(`butler-ci-cli MCP server ready (${mode})\n`);
 }

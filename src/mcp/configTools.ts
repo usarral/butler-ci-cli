@@ -7,13 +7,13 @@ import { fail, json, registerDisabledTool, safe, WITHOUT_READ_ONLY } from "./hel
 // El nombre se usa para construir la ruta del fichero: se restringe para evitar '../'.
 const configName = z
   .string()
-  .regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/, "Solo letras, números, '.', '_' y '-'")
-  .describe("Nombre de la configuración (entorno)");
+  .regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/, "Letters, numbers, '.', '_' and '-' only")
+  .describe("Name of the saved environment");
 
 const jenkinsUrl = z
   .string()
-  .refine((value) => /^https?:\/\/[^\s/]+/.test(value), "Debe ser una URL http(s)")
-  .describe("URL base de Jenkins, p. ej. https://jenkins.example.com");
+  .refine((value) => /^https?:\/\/[^\s/]+/.test(value), "Must be an http(s) URL")
+  .describe("Jenkins base URL, e.g. https://jenkins.example.com");
 
 const preferences = z
   .object({
@@ -21,7 +21,7 @@ const preferences = z
     logViewer: z.string().optional(),
     downloadLogsDir: z.string().optional(),
   })
-  .describe("Preferencias del CLI; una cadena vacía borra el valor");
+  .describe("CLI preferences; an empty string clears the value");
 
 /** Vista de una configuración sin el token. */
 function publicView(config: JenkinsConfig) {
@@ -41,9 +41,9 @@ export function registerConfigTools(
   server.registerTool(
     "get_config",
     {
-      title: "Entornos de Jenkins",
+      title: "Jenkins environments",
       description:
-        "Devuelve el entorno de Jenkins activo y todos los guardados (URL y usuario, nunca el token).",
+        "Return the active Jenkins environment and all saved ones (URL and user, never the token).",
       annotations: { readOnlyHint: true },
     },
     safe(() => {
@@ -54,7 +54,7 @@ export function registerConfigTools(
         .filter((config): config is JenkinsConfig => config !== null);
       return json({
         active: active ? publicView(active) : null,
-        activeSource: active?.name === "env-fallback" ? "variables de entorno" : "configuración guardada",
+        activeSource: active?.name === "env-fallback" ? "environment variables" : "saved configuration",
         configs: saved.map(publicView),
       });
     })
@@ -63,20 +63,20 @@ export function registerConfigTools(
   server.registerTool(
     "use_config",
     {
-      title: "Cambiar de entorno",
+      title: "Switch environment",
       description:
-        "Activa otro entorno de Jenkins guardado. Las siguientes tools usarán ese servidor. " +
-        "Cambia también el entorno activo del CLI (persistente).",
+        "Activate another saved Jenkins environment. Later tool calls will use that server. " +
+        "It also changes the CLI's active environment (persistent).",
       inputSchema: { name: configName },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
     },
     safe(({ name }: { name: string }) => {
       const config = configManager.loadConfig(name);
       if (!config) {
-        return fail(`No existe la configuración '${name}'. Disponibles: ${configManager.listConfigs().join(", ") || "ninguna"}`);
+        return fail(`No saved environment named '${name}'. Available: ${configManager.listConfigs().join(", ") || "none"}`);
       }
       if (!configManager.setCurrentConfig(name)) {
-        return fail(`No se pudo activar la configuración '${name}'`);
+        return fail(`Could not activate environment '${name}'`);
       }
       resetJenkinsClient();
       return json({ active: publicView(config) });
@@ -87,15 +87,15 @@ export function registerConfigTools(
     server.registerTool(
       "create_config",
       {
-        title: "Crear un entorno",
-        description: "Guarda un nuevo entorno de Jenkins con su URL, usuario y API token.",
+        title: "Create an environment",
+        description: "Save a new Jenkins environment with its URL, username and API token.",
         inputSchema: {
           name: configName,
           url: jenkinsUrl,
-          username: z.string().min(1).describe("Usuario de Jenkins"),
-          token: z.string().min(1).describe("API token de Jenkins"),
+          username: z.string().min(1).describe("Jenkins username"),
+          token: z.string().min(1).describe("Jenkins API token"),
           description: z.string().optional(),
-          setActive: z.boolean().default(true).describe("Activar el entorno tras crearlo"),
+          setActive: z.boolean().default(true).describe("Activate the environment after creating it"),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
@@ -109,7 +109,7 @@ export function registerConfigTools(
           setActive: boolean;
         }) => {
           if (configManager.listConfigs().includes(args.name)) {
-            return fail(`Ya existe una configuración llamada '${args.name}'. Usa update_config para modificarla.`);
+            return fail(`An environment named '${args.name}' already exists. Use update_config to modify it.`);
           }
           const config: JenkinsConfig = {
             name: args.name,
@@ -131,26 +131,26 @@ export function registerConfigTools(
     registerDisabledTool(
       server,
       "create_config",
-      "crear entornos de Jenkins",
+      "create Jenkins environments",
       options.readOnly
-        ? `${WITHOUT_READ_ONLY} y con --enable-create-config`
-        : "el usuario debe añadir --enable-create-config al comando 'butler-ci-cli mcp' y reiniciar el servidor"
+        ? `${WITHOUT_READ_ONLY} and with --enable-create-config`
+        : "the user must add --enable-create-config to the 'butler-ci-cli mcp' command and restart the server"
     );
   }
 
   if (options.readOnly) {
-    registerDisabledTool(server, "update_config", "modificar entornos de Jenkins", WITHOUT_READ_ONLY);
-    registerDisabledTool(server, "delete_config", "eliminar entornos de Jenkins", WITHOUT_READ_ONLY);
+    registerDisabledTool(server, "update_config", "edit Jenkins environments", WITHOUT_READ_ONLY);
+    registerDisabledTool(server, "delete_config", "delete Jenkins environments", WITHOUT_READ_ONLY);
     return;
   }
 
   server.registerTool(
     "update_config",
     {
-      title: "Modificar un entorno",
+      title: "Edit an environment",
       description:
-        "Modifica URL, usuario, token, descripción o preferencias de un entorno guardado. " +
-        "Solo se cambian los campos indicados.",
+        "Edit URL, username, token, description or preferences of a saved environment. " +
+        "Only the fields you pass are changed.",
       inputSchema: {
         name: configName,
         url: jenkinsUrl.optional(),
@@ -171,7 +171,7 @@ export function registerConfigTools(
         preferences?: { editor?: string; logViewer?: string; downloadLogsDir?: string };
       }) => {
         const config = configManager.loadConfig(args.name);
-        if (!config) return fail(`No existe la configuración '${args.name}'`);
+        if (!config) return fail(`No saved environment named '${args.name}'`);
 
         const updated: JenkinsConfig = {
           ...config,
@@ -198,17 +198,17 @@ export function registerConfigTools(
   server.registerTool(
     "delete_config",
     {
-      title: "Eliminar un entorno",
+      title: "Delete an environment",
       description:
-        "Elimina un entorno guardado de forma permanente. Si era el activo, no quedará ninguno activo. " +
-        "Confirma con el usuario antes de usarla.",
+        "Permanently delete a saved environment. If it was the active one, none will be active afterwards. " +
+        "Confirm with the user before using it.",
       inputSchema: { name: configName },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true },
     },
     safe(({ name }: { name: string }) => {
-      if (!configManager.loadConfig(name)) return fail(`No existe la configuración '${name}'`);
+      if (!configManager.loadConfig(name)) return fail(`No saved environment named '${name}'`);
       const wasActive = configManager.getCurrentConfig() === name;
-      if (!configManager.deleteConfig(name)) return fail(`No se pudo eliminar la configuración '${name}'`);
+      if (!configManager.deleteConfig(name)) return fail(`Could not delete environment '${name}'`);
       if (wasActive) resetJenkinsClient();
       return json({ deleted: name, wasActive, remaining: configManager.listConfigs() });
     })
