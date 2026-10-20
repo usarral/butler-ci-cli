@@ -96,8 +96,9 @@ The workflow **does not trigger** for changes to:
 
 ### 6. NPM Publication
 
-- Publishes the package to npm registry
-- Uses the `NPM_TOKEN` secret for authentication
+- Publishes the package to npm registry with `npm publish`
+- Authenticates with npm Trusted Publishing (OIDC): no token or secret is involved
+- Runs before the GitHub release is created, so a release only exists for versions that reached npm
 - Makes the package publicly available
 
 ## Security Considerations
@@ -115,7 +116,8 @@ The workflow only runs on the `master` branch, ensuring:
 The workflow requires the following GitHub secrets:
 
 - `GITHUB_TOKEN` - Automatically provided by GitHub Actions (for releases)
-- `NPM_TOKEN` - Must be configured manually (for npm publishing)
+
+npm publishing needs no secret. It requires a Trusted Publisher configured on npmjs.com for this repository and the `release.yml` workflow, with "Allow npm publish" enabled (see [Publishing](PUBLISHING.md)).
 
 ### Permissions
 
@@ -123,6 +125,7 @@ The workflow requires the following permissions:
 
 - `contents: write` - To create releases and push version commits
 - `pull-requests: write` - For future enhancement capabilities
+- `id-token: write` - To authenticate with npm through OIDC (Trusted Publishing)
 - `id-token: write` - For secure npm publishing
 
 ## Best Practices
@@ -149,7 +152,7 @@ If the automated release fails:
 
 1. Check the GitHub Actions logs for errors
 2. Verify all tests pass locally
-3. Ensure `NPM_TOKEN` secret is valid
+3. Check the Trusted Publisher configuration on npmjs.com (see below)
 4. Check npm registry status
 
 ### Wrong Version Bump
@@ -164,28 +167,14 @@ If the version was bumped incorrectly:
 
 If the package didn't publish to npm:
 
-1. Check the `NPM_TOKEN` secret is valid and not expired
-2. Verify you have publish permissions on npm
+1. Check the Trusted Publisher on npmjs.com: workflow filename must be exactly `release.yml`, the environment name empty, and "Allow npm publish" enabled
+2. Check `package.json` `repository.url` matches the GitHub repository
 3. Check for npm registry issues
-4. Re-run the workflow manually if needed
+4. Re-run the workflow manually if needed (it computes a new version from the last commit)
 
 ## Manual Release (Fallback)
 
-If automated releases fail, you can still release manually:
-
-### Option 1: Using GitHub Release (triggers existing workflow)
-
-1. Update version in `package.json`
-2. Commit and push changes
-3. Create a release on GitHub
-4. The `publish.yml` workflow will handle npm publication
-
-### Option 2: Using Manual Workflow Dispatch
-
-1. Go to Actions → "Publish to npm"
-2. Click "Run workflow"
-3. Specify version or leave empty to use `package.json` version
-4. Execute the workflow
+If an automated release fails, re-run it from Actions → "Automated Release on Master" → **Run workflow**. Note that it bumps the version again based on the last commit. There is no separate publish workflow: npm only trusts `release.yml`.
 
 ## Monitoring
 
