@@ -452,24 +452,26 @@ claude mcp add butler -- npx -y butler-ci-cli mcp
 }
 ```
 
-If you installed it globally, replace `npx -y butler-ci-cli` with `butler-ci-cli`. Add `--read-only` to the command to expose only read tools, or `--enable-create-config` to also expose `create_config`.
+If you installed it globally, replace `npx -y butler-ci-cli` with `butler-ci-cli`. Add `--read-only` for a read-only server, or `--enable-create-config` to enable `create_config`.
 
 ### Tools
+
+Tools that are turned off by a flag stay listed, marked as disabled. Calling one returns an error explaining which option enables it, so models don't conclude the capability doesn't exist and try other tools instead.
 
 | Tool | Description |
 |------|-------------|
 | `get_config` | Active environment and all saved ones (never includes tokens) |
 | `use_config` | Switch the active Jenkins environment |
-| `update_config` / `delete_config` | Modify or remove environments (hidden with `--read-only`) |
-| `create_config` | Create an environment. Disabled by default: enable it with `--enable-create-config` (hidden with `--read-only`) |
+| `update_config` / `delete_config` | Modify or remove environments (disabled with `--read-only`) |
+| `create_config` | Create an environment. Disabled by default: enable it with `--enable-create-config` (also disabled with `--read-only`) |
 | `search_jobs` / `list_jobs` | Find jobs, list jobs and folders |
 | `get_job_info` / `get_job_params` | Job details and accepted parameters |
 | `get_last_build` / `list_builds` | Build status, filtering and pagination |
 | `get_build_logs` | Last N lines of a build log (`build` accepts a number or `latest`) |
 | `follow_build_logs` | Incremental log reading for running builds |
 | `get_build_steps` | Pipeline stages and steps |
-| `download_build_logs` | Save a log to `~/.butler-ci-cli/logs` (hidden with `--read-only`) |
-| `trigger_build` | Start a build with parameters (hidden with `--read-only`) |
+| `download_build_logs` | Save a log to `~/.butler-ci-cli/logs` (disabled with `--read-only`) |
+| `trigger_build` | Start a build with parameters (disabled with `--read-only`) |
 
 ## 🗂️ Project Structure
 

@@ -5,7 +5,7 @@ import { routeLogsToStderr } from "../utils/logger";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { registerConfigTools } from "./configTools";
-import { guarded, json, text } from "./helpers";
+import { guarded, json, registerDisabledTool, text, WITHOUT_READ_ONLY } from "./helpers";
 import {
   buildJob,
   downloadBuildLogs,
@@ -211,7 +211,10 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
     )
   );
 
-  if (!options.readOnly) {
+  if (options.readOnly) {
+    registerDisabledTool(server, "download_build_logs", "guardar logs en disco", WITHOUT_READ_ONLY);
+    registerDisabledTool(server, "trigger_build", "lanzar builds en Jenkins", WITHOUT_READ_ONLY);
+  } else {
     server.registerTool(
       "download_build_logs",
       {
