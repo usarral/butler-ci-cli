@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { registerConfigTools } from "./configTools";
 import { guarded, json, registerDisabledTool, text, WITHOUT_READ_ONLY } from "./helpers";
 import {
+  abortBuild,
   buildJob,
   downloadBuildLogs,
   findJobsByName,
@@ -214,6 +215,7 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
   if (options.readOnly) {
     registerDisabledTool(server, "download_build_logs", "guardar logs en disco", WITHOUT_READ_ONLY);
     registerDisabledTool(server, "trigger_build", "lanzar builds en Jenkins", WITHOUT_READ_ONLY);
+    registerDisabledTool(server, "abort_build", "abortar builds en ejecución", WITHOUT_READ_ONLY);
   } else {
     server.registerTool(
       "download_build_logs",
@@ -246,6 +248,22 @@ export function createMcpServer(options: McpServerOptions = {}): McpServer {
       },
       guarded(async ({ job, parameters }: { job: string; parameters?: Record<string, string | number | boolean> }) =>
         json(await buildJob(job, parameters))
+      )
+    );
+
+    server.registerTool(
+      "abort_build",
+      {
+        title: "Abortar un build en ejecución",
+        description:
+          "Aborta un build que está en ejecución. Detiene trabajo real en Jenkins: indica el número de build " +
+          "(consúltalo con list_builds o get_last_build) y confirma con el usuario antes de llamarla. " +
+          "Si el build ya terminó no hace nada y lo indica.",
+        inputSchema: { job: jobName, build: buildRef },
+        annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: true },
+      },
+      guarded(async ({ job, build }: { job: string; build: number | "latest" }) =>
+        json(await abortBuild(job, build === "latest" ? "lastBuild" : build))
       )
     );
   }

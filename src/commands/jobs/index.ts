@@ -6,6 +6,7 @@ import { lastBuild } from "../lastBuild";
 import { build } from "../build";
 import { listBuilds } from "../listBuilds";
 import { showLogs } from "../logs";
+import { abort } from "../abort";
 
 export function setupJobsCommands(program: Command): void {
   const jobsCommand = program
@@ -69,4 +70,12 @@ export function setupJobsCommands(program: Command): void {
     .option("-i, --interval <seconds>", "Intervalo de actualización en segundos para streaming (default: 5)", parseInt, 5)
     .description("Ver logs de un build específico")
     .action(showLogs);
+
+  jobsCommand
+    .command("abort")
+    .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
+    .argument("<buildNumber>", "Número del build o 'latest' para el más reciente")
+    .option("-y, --yes", "Abortar sin pedir confirmación")
+    .description("Abortar un build en ejecución")
+    .action(abort);
 }

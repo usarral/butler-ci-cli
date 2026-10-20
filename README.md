@@ -24,6 +24,7 @@ Butler CI CLI is a terminal application that allows you to manage and monitor Je
 - 🎨 Colorful and user-friendly terminal interface
 - 📋 Query required parameters for jobs
 - 🚀 Execute builds in an assisted manner (interactive or with CLI parameters)
+- 🛑 Abort running builds
 - 📄 View and download build logs
 - 🔄 Stream logs in real-time with configurable refresh intervals
 - ✏️ Open logs in configurable editors
@@ -322,6 +323,15 @@ butler-ci-cli jobs build my-job --params "ENVIRONMENT=production,VERSION=1.2.3"
 butler-ci-cli build my-job --params "ENVIRONMENT=production,VERSION=1.2.3"
 ```
 
+##### `jobs abort <jobName> <buildNumber|latest>`
+Aborts a build that is currently running. It asks for confirmation first; use `--yes` to skip it. If the build has already finished, nothing is sent to Jenkins.
+
+```bash
+butler-ci-cli jobs abort my-job 42
+butler-ci-cli jobs abort my-job latest
+butler-ci-cli jobs abort my-job 42 --yes   # No confirmation
+```
+
 ##### `jobs logs <jobName> <buildNumber|latest>`
 View, download, or open logs from a specific build in an editor.
 
@@ -406,6 +416,7 @@ butler-ci-cli jobs last-build backend/api    # Last build of backend/api job
 butler-ci-cli jobs params my-pipeline    # View job parameters
 butler-ci-cli jobs build my-pipeline         # Execute build (interactive mode)
 butler-ci-cli jobs build my-pipeline --params "ENV=prod,VERSION=1.0.0"
+butler-ci-cli jobs abort my-pipeline latest  # Abort the running build
 butler-ci-cli jobs steps my-pipeline 42  # View steps of build #42
 butler-ci-cli jobs steps my-pipeline latest  # View steps of latest build
 
@@ -472,6 +483,7 @@ Tools that are turned off by a flag stay listed, marked as disabled. Calling one
 | `get_build_steps` | Pipeline stages and steps |
 | `download_build_logs` | Save a log to `~/.butler-ci-cli/logs` (disabled with `--read-only`) |
 | `trigger_build` | Start a build with parameters (disabled with `--read-only`) |
+| `abort_build` | Abort a running build; the build number is required (disabled with `--read-only`) |
 
 ## 🗂️ Project Structure
 

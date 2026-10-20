@@ -12,8 +12,10 @@ import {
   getBuilds,
   getProgressiveBuildLogs,
   getBuildInfo,
+  abortBuild,
 } from '../src/utils/jenkinsFolder';
 import * as config from '../src/utils/config';
+import { resetJenkinsClient } from '../src/utils/jenkinsClient';
 import {
   mockJenkinsRootResponse,
   mockFolderResponse,
@@ -398,6 +400,70 @@ describe('Jenkins Folder Operations', () => {
 
     it('should throw error for non-existent build', async () => {
       await expect(getBuildInfo('test-job-1', '999')).rejects.toThrow();
+    });
+  });
+
+  describe('abortBuild', () => {
+    // El cliente es un singleton: sin reiniciarlo conservaría el adaptador de mock del primer test
+    beforeEach(() => resetJenkinsClient());
+
+    const running = (job: string, number: number) => ({
+      number,
+      url: `http://localhost:8080/job/${job}/${number}/`,
+      result: null,
+      timestamp: 1698768500000,
+      duration: 0,
+      building: true,
+    });
+
+    it('should stop a running build', async () => {
+      mockAxios.onPost('/job/test-job-1/50/stop').reply(302);
+
+      const result = await abortBuild('test-job-1', 50);
+
+      expect(result.aborted).toBe(true);
+      expect(result.buildNumber).toBe(50);
+      expect(mockAxios.history.post.map(r => r.url)).toEqual(['/job/test-job-1/50/stop']);
+    });
+
+    it('should not stop a build that already finished', async () => {
+      const result = await abortBuild('test-job-1', 42);
+
+      expect(result.aborted).toBe(false);
+      expect(result.message).toContain('SUCCESS');
+      expect(mockAxios.history.post).toHaveLength(0);
+    });
+
+    it('should resolve "latest" to the last build number', async () => {
+      mockAxios.onGet(/\/job\/test-job-1\/lastBuild\/api\/json\?tree=/).reply(200, running('test-job-1', 51));
+      mockAxios.onPost('/job/test-job-1/51/stop').reply(302);
+
+      const result = await abortBuild('test-job-1', 'latest');
+
+      expect(result.buildNumber).toBe(51);
+      expect(mockAxios.history.post.map(r => r.url)).toEqual(['/job/test-job-1/51/stop']);
+    });
+
+    it('should build the path for jobs inside folders', async () => {
+      mockAxios.onGet(/\/job\/backend\/job\/api-service\/7\/api\/json\?tree=/).reply(200, running('api-service', 7));
+      mockAxios.onPost('/job/backend/job/api-service/7/stop').reply(302);
+
+      const result = await abortBuild('backend/api-service', '7');
+
+      expect(result.aborted).toBe(true);
+    });
+
+    it('should report a permissions error on 403', async () => {
+      mockAxios.onPost('/job/test-job-1/50/stop').reply(403);
+
+      await expect(abortBuild('test-job-1', 50)).rejects.toThrow('Sin permisos');
+    });
+
+    it('should fail when the build does not exist', async () => {
+      mockAxios.onGet(/\/job\/test-job-1\/999\/api\/json\?tree=/).reply(404);
+
+      await expect(abortBuild('test-job-1', 999)).rejects.toThrow('999');
+      expect(mockAxios.history.post).toHaveLength(0);
     });
   });
 });

@@ -52,6 +52,7 @@ describe('MCP server', () => {
     const client = await setup();
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([
+      'abort_build',
       'create_config',
       'delete_config',
       'download_build_logs',
@@ -102,7 +103,7 @@ describe('MCP server', () => {
 
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
-    for (const gated of ['trigger_build', 'download_build_logs', 'create_config', 'update_config', 'delete_config']) {
+    for (const gated of ['trigger_build', 'abort_build', 'download_build_logs', 'create_config', 'update_config', 'delete_config']) {
       expect(names).toContain(gated);
       const result = await client.callTool({ name: gated, arguments: { job: 'j', name: 'n' } });
       expect(result.isError).toBe(true);
@@ -110,6 +111,7 @@ describe('MCP server', () => {
     }
 
     expect(folder.buildJob).not.toHaveBeenCalled();
+    expect(folder.abortBuild).not.toHaveBeenCalled();
     expect(folder.downloadBuildLogs).not.toHaveBeenCalled();
     expect(save).not.toHaveBeenCalled();
     expect(del).not.toHaveBeenCalled();
@@ -368,6 +370,34 @@ describe('MCP server', () => {
       expect(reset).toHaveBeenCalled();
       expect(JSON.parse(text(result)).wasActive).toBe(true);
     });
+  });
+
+  it('abort_build aborta el build indicado y resuelve "latest"', async () => {
+    vi.mocked(folder.abortBuild).mockResolvedValue({ aborted: true, buildNumber: 42, message: 'ok' });
+    const client = await setup();
+
+    const byNumber = await client.callTool({ name: 'abort_build', arguments: { job: 'app/deploy', build: 42 } });
+    expect(folder.abortBuild).toHaveBeenLastCalledWith('app/deploy', 42);
+    expect(JSON.parse(text(byNumber))).toEqual({ aborted: true, buildNumber: 42, message: 'ok' });
+
+    await client.callTool({ name: 'abort_build', arguments: { job: 'app/deploy', build: 'latest' } });
+    expect(folder.abortBuild).toHaveBeenLastCalledWith('app/deploy', 'lastBuild');
+  });
+
+  it('abort_build exige el build: nunca aborta "el último" por omisión', async () => {
+    const client = await setup();
+
+    const result = await client.callTool({ name: 'abort_build', arguments: { job: 'app/deploy' } });
+
+    expect(result.isError).toBe(true);
+    expect(folder.abortBuild).not.toHaveBeenCalled();
+  });
+
+  it('abort_build avisa de que es destructiva', async () => {
+    const client = await setup();
+    const tool = (await client.listTools()).tools.find((t) => t.name === 'abort_build');
+    expect(tool?.annotations?.destructiveHint).toBe(true);
+    expect(tool?.annotations?.readOnlyHint).toBe(false);
   });
 
   it('follow_build_logs devuelve el siguiente offset', async () => {
