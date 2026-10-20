@@ -30,6 +30,15 @@ setupConfigCommands(program);
 // Comandos de jobs (nueva estructura)
 setupJobsCommands(program);
 
+program
+  .command("mcp")
+  .description("Iniciar un servidor MCP (stdio) para conectar Claude, OpenCode y otros clientes")
+  .option("--read-only", "No exponer herramientas que modifican Jenkins (trigger_build)")
+  .action(async (options) => {
+    const { startMcpServer } = await import("./mcp/server");
+    await startMcpServer({ readOnly: Boolean(options.readOnly) });
+  });
+
 // Comandos deprecados (mantener compatibilidad hacia atrás)
 createDeprecatedAlias(
   program,
