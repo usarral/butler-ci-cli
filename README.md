@@ -29,6 +29,7 @@ Butler CI CLI is a terminal application that allows you to manage and monitor Je
 - ✏️ Open logs in configurable editors
 - ⚙️ Customizable preferences system (editor, log viewer, directory)
 - 🔍 View workflow steps and stages of job executions
+- 🤖 MCP server to drive Jenkins from Claude, OpenCode and other AI clients
 
 ## 🛠️ Installation
 
@@ -422,6 +423,56 @@ butler-ci-cli jobs logs my-job 42 -d         # Download logs
 butler-ci-cli jobs logs my-job latest -e     # Open latest build in editor
 ```
 
+## 🤖 MCP Server
+
+`butler-ci-cli mcp` starts a [Model Context Protocol](https://modelcontextprotocol.io) server over stdio, so AI clients can query and operate Jenkins using your existing Butler configurations (`~/.butler-ci-cli/configs`) or the `JENKINS_*` environment variables.
+
+### Connect a client
+
+```bash
+# Claude Code
+claude mcp add butler -- npx -y butler-ci-cli mcp
+```
+
+```jsonc
+// Claude Desktop: claude_desktop_config.json
+{
+  "mcpServers": {
+    "butler": { "command": "npx", "args": ["-y", "butler-ci-cli", "mcp"] }
+  }
+}
+```
+
+```jsonc
+// OpenCode: opencode.json
+{
+  "mcp": {
+    "butler": { "type": "local", "command": ["npx", "-y", "butler-ci-cli", "mcp"] }
+  }
+}
+```
+
+If you installed it globally, replace `npx -y butler-ci-cli` with `butler-ci-cli`. Add `--read-only` for a read-only server, or `--enable-create-config` to enable `create_config`.
+
+### Tools
+
+Tools that are turned off by a flag stay listed, marked as disabled. Calling one returns an error explaining which option enables it, so models don't conclude the capability doesn't exist and try other tools instead.
+
+| Tool | Description |
+|------|-------------|
+| `get_config` | Active environment and all saved ones (never includes tokens) |
+| `use_config` | Switch the active Jenkins environment |
+| `update_config` / `delete_config` | Modify or remove environments (disabled with `--read-only`) |
+| `create_config` | Create an environment. Disabled by default: enable it with `--enable-create-config` (also disabled with `--read-only`) |
+| `search_jobs` / `list_jobs` | Find jobs, list jobs and folders |
+| `get_job_info` / `get_job_params` | Job details and accepted parameters |
+| `get_last_build` / `list_builds` | Build status, filtering and pagination |
+| `get_build_logs` | Last N lines of a build log (`build` accepts a number or `latest`) |
+| `follow_build_logs` | Incremental log reading for running builds |
+| `get_build_steps` | Pipeline stages and steps |
+| `download_build_logs` | Save a log to `~/.butler-ci-cli/logs` (disabled with `--read-only`) |
+| `trigger_build` | Start a build with parameters (disabled with `--read-only`) |
+
 ## 🗂️ Project Structure
 
 ```
@@ -434,6 +485,7 @@ butler-ci-cli/
 │   │   ├── build.ts        # build command
 │   │   ├── listBuilds.ts   # list-builds command
 │   │   └── logs.ts         # logs command
+│   ├── mcp/                # MCP server (butler-ci-cli mcp)
 │   ├── utils/              # Utilities
 │   │   ├── config.ts       # Configuration management
 │   │   ├── jenkinsClient.ts # HTTP client for Jenkins
@@ -472,6 +524,8 @@ pnpm run test:coverage  # Run tests with coverage
 - **chalk**: Terminal colors
 - **inquirer**: Interactive prompts
 - **pino**: Logging
+- **@modelcontextprotocol/sdk**: MCP server
+- **zod**: Tool input validation
 
 ### Development
 - **typescript**: Programming language

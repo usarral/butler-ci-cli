@@ -22,13 +22,26 @@ const program = new Command();
 program
   .name("butler-ci-cli")
   .description("CLI para interactuar con Pipelines Jenkins")
-  .version("3.0.21");
+  .version("3.1.0");
 
 // Comandos de configuración
 setupConfigCommands(program);
 
 // Comandos de jobs (nueva estructura)
 setupJobsCommands(program);
+
+program
+  .command("mcp")
+  .description("Iniciar un servidor MCP (stdio) para conectar Claude, OpenCode y otros clientes")
+  .option("--read-only", "Modo solo lectura: las herramientas que lanzan builds, escriben logs o crean/modifican/borran entornos responden con un error")
+  .option("--enable-create-config", "Exponer create_config (el API token pasa por la conversación)")
+  .action(async (options) => {
+    const { startMcpServer } = await import("./mcp/server");
+    await startMcpServer({
+      readOnly: Boolean(options.readOnly),
+      allowCreateConfig: Boolean(options.enableCreateConfig),
+    });
+  });
 
 // Comandos deprecados (mantener compatibilidad hacia atrás)
 createDeprecatedAlias(

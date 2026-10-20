@@ -1,6 +1,7 @@
 import pino from 'pino';
 import pretty from 'pino-pretty';
 import chalk from 'chalk';
+import { Writable } from 'node:stream';
 
 /**
  * Logger de la CLI.
@@ -69,6 +70,13 @@ const level = process.env.LOG_LEVEL || 'info';
 const showTimestamps =
   process.env.BUTLER_LOG_TIMESTAMPS === '1' || level === 'debug' || level === 'trace';
 
+let logTarget: NodeJS.WriteStream = process.stdout;
+
+/** El servidor MCP usa stdout para el protocolo: los logs deben ir por stderr. */
+export function routeLogsToStderr(): void {
+  logTarget = process.stderr;
+}
+
 const stream = pretty({
   // Escribir por `process.stdout` en vez del descriptor 1 directo.
   //
@@ -82,7 +90,15 @@ const stream = pretty({
   //
   // Como efecto secundario, la salida del logger y la de `console.log` van
   // ahora por el mismo stream, así que ya no pueden intercalarse mal.
-  destination: process.stdout,
+  destination: new Writable({
+    // Sin decodeStrings llegan strings (no Buffers) y se conserva la conversión
+    // de Node para la consola de Windows.
+    decodeStrings: false,
+    write(chunk, _encoding, callback) {
+      logTarget.write(chunk);
+      callback();
+    },
+  }),
   // El color lo aplica `formatters` (chalk), que además respeta TTY y NO_COLOR.
   // Con `colorize: true`, pino-pretty pintaba el mensaje entero de cian y se
   // comía los colores por elemento.

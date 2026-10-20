@@ -29,6 +29,11 @@ export function getJenkinsClient(): AxiosInstance {
   return jenkinsInstance;
 }
 
+/** Descarta el cliente cacheado; el siguiente uso lee de nuevo la configuración activa. */
+export function resetJenkinsClient(): void {
+  jenkinsInstance = null;
+}
+
 // Para compatibilidad con el código existente
 export const jenkins = new Proxy({} as AxiosInstance, {
   get(target, prop) {
