@@ -5,6 +5,7 @@ import { routeLogsToStderr } from "../utils/logger";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { registerConfigTools } from "./configTools";
+import { buildInstructions } from "./instructions";
 import { guarded, json, registerDisabledTool, text, WITHOUT_READ_ONLY } from "./helpers";
 import {
   abortBuild,
@@ -47,7 +48,10 @@ function packageVersion(): string {
 }
 
 export function createMcpServer(options: McpServerOptions = {}): McpServer {
-  const server = new McpServer({ name: "butler-ci-cli", version: packageVersion() });
+  const server = new McpServer(
+    { name: "butler-ci-cli", version: packageVersion() },
+    { instructions: buildInstructions(options) }
+  );
   const readOnly = { readOnlyHint: true, openWorldHint: true } as const;
 
   registerConfigTools(server, options);

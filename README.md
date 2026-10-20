@@ -465,6 +465,10 @@ claude mcp add butler -- npx -y butler-ci-cli mcp
 
 If you installed it globally, replace `npx -y butler-ci-cli` with `butler-ci-cli`. Add `--read-only` for a read-only server, or `--enable-create-config` to enable `create_config`.
 
+### Instructions for the model
+
+On connect, the server sends usage instructions to the client (the MCP `instructions` field), which clients add to the model's context: how to pick the Jenkins environment, how to find job paths, how to diagnose a failed build, which tools have real effects and how to read the ones marked as disabled. The text adapts to `--read-only` and `--enable-create-config`.
+
 ### Tools
 
 Tools that are turned off by a flag stay listed, marked as disabled. Calling one returns an error explaining which option enables it, so models don't conclude the capability doesn't exist and try other tools instead.

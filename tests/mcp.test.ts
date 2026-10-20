@@ -400,6 +400,47 @@ describe('MCP server', () => {
     expect(tool?.annotations?.readOnlyHint).toBe(false);
   });
 
+  describe('instrucciones para el modelo', () => {
+    const toolNames = async (client: Awaited<ReturnType<typeof setup>>) =>
+      (await client.listTools()).tools.map((t) => t.name);
+
+    it('el servidor envía instrucciones al cliente', async () => {
+      const client = await setup();
+      const instructions = client.getInstructions() ?? '';
+
+      expect(instructions).toContain('get_config');
+      expect(instructions).toContain('DESACTIVADA');
+      expect(instructions).not.toContain('modo solo lectura');
+      expect(instructions.length).toBeLessThan(3000);
+    });
+
+    it('solo menciona herramientas que existen', async () => {
+      for (const options of [{}, { readOnly: true }, { allowCreateConfig: true }]) {
+        const client = await setup(options);
+        const names = await toolNames(client);
+        const mentioned = (client.getInstructions() ?? '').match(/\b[a-z]+(?:_[a-z]+)+\b/g) ?? [];
+
+        expect(mentioned.length).toBeGreaterThan(5);
+        for (const tool of new Set(mentioned)) expect(names).toContain(tool);
+      }
+    });
+
+    it('describe el modo solo lectura', async () => {
+      const client = await setup({ readOnly: true });
+      expect(client.getInstructions()).toContain('modo solo lectura');
+    });
+
+    it('solo habla de create_config como disponible cuando está activada', async () => {
+      const off = (await setup()).getInstructions() ?? '';
+      const on = (await setup({ allowCreateConfig: true })).getInstructions() ?? '';
+      const readOnlyToo = (await setup({ readOnly: true, allowCreateConfig: true })).getInstructions() ?? '';
+
+      expect(off).not.toContain('create_config crea');
+      expect(on).toContain('create_config crea');
+      expect(readOnlyToo).not.toContain('create_config crea');
+    });
+  });
+
   it('follow_build_logs devuelve el siguiente offset', async () => {
     vi.mocked(folder.getProgressiveBuildLogs).mockResolvedValue({ text: 'hola', size: 4, hasMore: true });
     const client = await setup();
