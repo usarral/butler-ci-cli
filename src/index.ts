@@ -22,7 +22,7 @@ const program = new Command();
 program
   .name("butler-ci-cli")
   .description("CLI para interactuar con Pipelines Jenkins")
-  .version("3.2.1");
+  .version("3.2.2");
 
 // Comandos de configuración
 setupConfigCommands(program);
