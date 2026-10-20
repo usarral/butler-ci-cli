@@ -288,9 +288,9 @@ butler-ci-cli --version
 **Scenario:** Everything worked but npm publish failed.
 
 **Solution:**
-1. Check NPM_TOKEN secret is valid
+1. Check the Trusted Publisher on npmjs.com (workflow `release.yml`, "Allow npm publish" enabled)
 2. Check npm registry status
-3. Manually trigger publish.yml workflow as fallback
+3. Re-run the "Automated Release on Master" workflow as fallback
 
 ### Problem: Forgot to use conventional commit format
 

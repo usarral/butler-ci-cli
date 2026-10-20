@@ -141,6 +141,11 @@ jobs:
           git commit -m "chore(release): bump version to $NEW_VERSION [skip ci]" || echo "No changes to commit"
           git push
 
+      # Trusted Publishing (OIDC): sin NPM_TOKEN. Requiere un Trusted Publisher en npmjs.com
+      # (workflow `release.yml`, sin environment) con "Allow npm publish" activado.
+      - name: Publish to npm
+        run: npm publish --access public
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -160,9 +165,3 @@ jobs:
             **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ steps.version.outputs.current_version }}...v${{ steps.version.outputs.new_version }}
           draft: false
           prerelease: false
-
-      - name: Release and publish to npm
-        run: npx semantic-release
-        # Nota: no export de NPM_TOKEN ni NODE_AUTH_TOKEN. Si quieres desactivar provenance:
-        # env:
-        #   NPM_CONFIG_PROVENANCE: false
