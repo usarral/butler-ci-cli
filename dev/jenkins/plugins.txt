@@ -1,0 +1,3 @@
+workflow-aggregator
+pipeline-stage-view
+cloudbees-folder

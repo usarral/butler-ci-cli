@@ -1,0 +1,61 @@
+import com.cloudbees.hudson.plugins.folder.Folder
+import hudson.security.FullControlOnceLoggedInAuthorizationStrategy
+import hudson.security.HudsonPrivateSecurityRealm
+import jenkins.model.Jenkins
+import jenkins.model.JenkinsLocationConfiguration
+import jenkins.security.ApiTokenProperty
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
+import org.jenkinsci.plugins.workflow.job.WorkflowJob
+
+// Development instance only: fixed credentials, never expose this port.
+def adminUser = System.getenv('BUTLER_DEV_USER') ?: 'admin'
+def adminPassword = System.getenv('BUTLER_DEV_PASSWORD') ?: 'admin'
+def adminToken = System.getenv('BUTLER_DEV_TOKEN') ?: '11aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+def pipelinesDir = new File('/usr/share/jenkins/ref/pipelines')
+
+def jenkins = Jenkins.get()
+
+def realm = new HudsonPrivateSecurityRealm(false)
+if (realm.getUser(adminUser) == null) {
+  realm.createAccount(adminUser, adminPassword)
+}
+jenkins.setSecurityRealm(realm)
+
+def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+strategy.setAllowAnonymousRead(false)
+jenkins.setAuthorizationStrategy(strategy)
+
+def user = hudson.model.User.get(adminUser)
+def tokenProperty = user.getProperty(ApiTokenProperty)
+if (!tokenProperty.tokenList.any { it.name == 'butler-dev' }) {
+  tokenProperty.addFixedNewToken('butler-dev', adminToken)
+}
+
+def url = System.getenv('JENKINS_URL_PUBLIC')
+if (url) {
+  JenkinsLocationConfiguration.get().setUrl(url)
+}
+jenkins.setNumExecutors(4)
+jenkins.setSystemMessage('Butler CI CLI development instance')
+
+// Every pipelines/**/<name>.groovy becomes a job at the same path (folders are created on demand).
+pipelinesDir.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+  if (!file.name.endsWith('.groovy')) return
+  def relative = pipelinesDir.toPath().relativize(file.toPath()).toString().replaceAll(/\.groovy$/, '')
+  def parts = relative.split('/') as List
+  def jobName = parts.pop()
+
+  def parent = jenkins as hudson.model.ItemGroup
+  parts.each { folderName ->
+    def existing = parent.getItem(folderName)
+    parent = existing ?: parent.createProject(Folder, folderName)
+  }
+
+  if (parent.getItem(jobName) == null) {
+    def job = parent.createProject(WorkflowJob, jobName)
+    job.setDefinition(new CpsFlowDefinition(file.text, true))
+    job.save()
+  }
+}
+
+jenkins.save()
