@@ -112,6 +112,11 @@ To test locally, you'll need access to a Jenkins server:
    export JENKINS_TOKEN="your-api-token"
    ```
 
+3. Or start a disposable Jenkins with sample pipelines using podman (see [`dev/jenkins`](dev/jenkins/README.md)):
+   ```bash
+   dev/jenkins/jenkins.sh up && dev/jenkins/jenkins.sh seed
+   ```
+
 ## 💻 Development Process
 
 ### Project Structure
