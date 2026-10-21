@@ -110,20 +110,20 @@ function getCauseDisplay(cause: any): string {
   const className = cause._class || "";
   
   if (className.includes("UserIdCause")) {
-    return `${icons.user} Usuario: ${cause.userId || "Desconocido"}`;
+    return `${icons.user} ${msg.causes.user({ user: cause.userId || msg.builds.unknown() })}`;
   }
   if (className.includes("TimerTriggerCause")) {
-    return `${icons.clock} Programación temporal`;
+    return `${icons.clock} ${msg.causes.timer()}`;
   }
   if (className.includes("SCMTriggerCause")) {
-    return `${icons.running} Cambio en repositorio`;
+    return `${icons.running} ${msg.causes.scm()}`;
   }
   if (className.includes("UpstreamCause")) {
-    return `${icons.upstream} Build padre: ${cause.upstreamProject}#${cause.upstreamBuild}`;
+    return `${icons.upstream} ${msg.causes.upstream({ project: cause.upstreamProject, build: cause.upstreamBuild })}`;
   }
   if (className.includes("BranchEventCause")) {
-    return `${icons.branch} Evento de rama: ${cause.origin || "Desconocido"}`;
+    return `${icons.branch} ${msg.causes.branchEvent({ origin: cause.origin || msg.builds.unknown() })}`;
   }
   
-  return cause.shortDescription || "Causa desconocida";
+  return cause.shortDescription || msg.causes.unknown();
 }

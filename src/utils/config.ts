@@ -179,7 +179,7 @@ export function getJenkinsConfig(): JenkinsConfig | null {
       url: envUrl,
       username: envUser,
       token: envToken,
-      description: 'Configuración desde variables de entorno (fallback)'
+      description: msg.config.store.envFallback()
     };
   }
 

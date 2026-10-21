@@ -119,7 +119,7 @@ Request bodies and command arguments are never printed (only the names of form f
 
 ### Language
 
-The CLI picks its language from `BUTLER_LANG` (`en` or `es`), then from the system locale (`LC_ALL`, `LC_MESSAGES`, `LANG`), and falls back to English. Messages are being translated progressively; the update notice is the first one available in both languages.
+The CLI picks its language from `BUTLER_LANG` (`en` or `es`), then from the system locale (`LC_ALL`, `LC_MESSAGES`, `LANG`), and falls back to English. All command output, prompts and `--help` descriptions are translated. Not translated: the labels built into Commander's help (`Usage:`, `Options:`), the `--debug` output, and the instructions the MCP server sends to the model.
 
 ## ⚙️ Configuration
 

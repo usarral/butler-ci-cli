@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import { msg } from "./i18n";
 import { fetchJobs } from "./commands/fetchJobs";
 import { listJobs } from "./commands/listJobs";
 import { jobInfo } from "./commands/jobInfo";
@@ -23,7 +24,7 @@ const program = new Command();
 
 program
   .name("butler-ci-cli")
-  .description("CLI para interactuar con Pipelines Jenkins")
+  .description(msg.cli.description())
   .version("3.9.0");
 
 program
@@ -43,11 +44,11 @@ setupJobsCommands(program);
 
 program
   .command("mcp")
-  .description("Iniciar un servidor MCP (stdio) para conectar Claude, OpenCode y otros clientes")
-  .option("--read-only", "Modo solo lectura: las herramientas que lanzan builds, escriben logs o crean/modifican/borran entornos responden con un error")
-  .option("--enable-create-config", "Exponer create_config (el API token pasa por la conversación)")
-  .option("--context <text>", "Contexto sobre tu Jenkins para el modelo (qué jobs usar, el flujo…)")
-  .option("--context-file <path>", "Fichero con ese contexto (además de ~/.butler-ci-cli/context.md, que se carga si existe)")
+  .description(msg.cli.commands.mcp())
+  .option("--read-only", msg.cli.options.readOnly())
+  .option("--enable-create-config", msg.cli.options.enableCreateConfig())
+  .option("--context <text>", msg.cli.options.context())
+  .option("--context-file <path>", msg.cli.options.contextFile())
   .action(async (options) => {
     const { startMcpServer } = await import("./mcp/server");
     await startMcpServer({
@@ -65,8 +66,8 @@ createDeprecatedAlias(
   "jobs info",
   jobInfo,
   {
-    args: [{ name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" }],
-    description: "Obtener información detallada de un job (deprecado, usa 'jobs info')"
+    args: [{ name: "<jobName>", description: msg.cli.arg.jobName() }],
+    description: msg.cli.deprecated({ description: msg.cli.commands.info(), command: "jobs info" })
   }
 );
 
@@ -76,8 +77,8 @@ createDeprecatedAlias(
   "jobs params",
   jobParams,
   {
-    args: [{ name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" }],
-    description: "Mostrar los parámetros requeridos por un job (deprecado, usa 'jobs params')"
+    args: [{ name: "<jobName>", description: msg.cli.arg.jobName() }],
+    description: msg.cli.deprecated({ description: msg.cli.commands.params(), command: "jobs params" })
   }
 );
 
@@ -88,10 +89,10 @@ createDeprecatedAlias(
   jobSteps,
   {
     args: [
-      { name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" },
-      { name: "<buildNumber>", description: "Número del build o 'latest' para el más reciente" }
+      { name: "<jobName>", description: msg.cli.arg.jobName() },
+      { name: "<buildNumber>", description: msg.cli.arg.buildNumber() }
     ],
-    description: "Mostrar los pasos (steps) de un build específico (deprecado, usa 'jobs steps')"
+    description: msg.cli.deprecated({ description: msg.cli.commands.steps(), command: "jobs steps" })
   }
 );
 
@@ -101,8 +102,8 @@ createDeprecatedAlias(
   "jobs last-build",
   lastBuild,
   {
-    args: [{ name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" }],
-    description: "Obtener información del último build de un job (deprecado, usa 'jobs last-build')"
+    args: [{ name: "<jobName>", description: msg.cli.arg.jobName() }],
+    description: msg.cli.deprecated({ description: msg.cli.commands.lastBuild(), command: "jobs last-build" })
   }
 );
 
@@ -112,9 +113,9 @@ createDeprecatedAlias(
   "jobs build",
   build,
   {
-    args: [{ name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" }],
-    options: [{ flags: "--params <params>", description: "Parámetros en formato key=value,key2=value2" }],
-    description: "Ejecutar un build de forma asistida (deprecado, usa 'jobs build')"
+    args: [{ name: "<jobName>", description: msg.cli.arg.jobName() }],
+    options: [{ flags: "--params <params>", description: msg.cli.options.params() }],
+    description: msg.cli.deprecated({ description: msg.cli.commands.build(), command: "jobs build" })
   }
 );
 
@@ -124,18 +125,18 @@ createDeprecatedAlias(
   "jobs list-builds",
   listBuilds,
   {
-    args: [{ name: "<jobName>", description: "Nombre del job (puede incluir carpetas: folder/subfolder/job)" }],
+    args: [{ name: "<jobName>", description: msg.cli.arg.jobName() }],
     options: [
-      { flags: "--status <status>", description: "Filtrar por estado (SUCCESS, FAILURE, UNSTABLE, ABORTED, RUNNING)" },
-      { flags: "--branch <branch>", description: "Filtrar por rama" },
-      { flags: "--since <date>", description: "Filtrar builds desde esta fecha (ISO 8601)" },
-      { flags: "--until <date>", description: "Filtrar builds hasta esta fecha (ISO 8601)" },
-      { flags: "--offset <number>", description: "Número de builds a omitir", parser: parseInt },
-      { flags: "--limit <number>", description: "Número máximo de builds a mostrar", parser: parseInt, defaultValue: 50 },
-      { flags: "--sort-by <field>", description: "Campo por el que ordenar (number, timestamp)", defaultValue: "number" },
-      { flags: "--order <order>", description: "Orden de clasificación (asc, desc)", defaultValue: "desc" }
+      { flags: "--status <status>", description: msg.cli.options.status() },
+      { flags: "--branch <branch>", description: msg.cli.options.branch() },
+      { flags: "--since <date>", description: msg.cli.options.since() },
+      { flags: "--until <date>", description: msg.cli.options.until() },
+      { flags: "--offset <number>", description: msg.cli.options.offset(), parser: parseInt },
+      { flags: "--limit <number>", description: msg.cli.options.limit(), parser: parseInt, defaultValue: 50 },
+      { flags: "--sort-by <field>", description: msg.cli.options.sortBy(), defaultValue: "number" },
+      { flags: "--order <order>", description: msg.cli.options.order(), defaultValue: "desc" }
     ],
-    description: "Listar builds de un job con opciones de filtrado y paginación (deprecado, usa 'jobs list-builds')"
+    description: msg.cli.deprecated({ description: msg.cli.commands.listBuilds(), command: "jobs list-builds" })
   }
 );
 
@@ -146,17 +147,17 @@ createDeprecatedAlias(
   showLogs,
   {
     args: [
-      { name: "<jobName>", description: "Nombre del job" },
-      { name: "<buildNumber>", description: "Número del build o 'latest' para el más reciente" }
+      { name: "<jobName>", description: msg.cli.arg.jobNameShort() },
+      { name: "<buildNumber>", description: msg.cli.arg.buildNumber() }
     ],
     options: [
-      { flags: "-d, --download", description: "Descargar logs a archivo" },
-      { flags: "-e, --editor", description: "Abrir logs en el editor configurado" },
-      { flags: "-o, --output <path>", description: "Ruta de salida para el archivo de logs" },
-      { flags: "-s, --stream", description: "Ver logs en tiempo real (streaming mode)" },
-      { flags: "-i, --interval <seconds>", description: "Intervalo de actualización en segundos para streaming (default: 5)", parser: parseInt, defaultValue: 5 }
+      { flags: "-d, --download", description: msg.cli.options.download() },
+      { flags: "-e, --editor", description: msg.cli.options.editor() },
+      { flags: "-o, --output <path>", description: msg.cli.options.output() },
+      { flags: "-s, --stream", description: msg.cli.options.stream() },
+      { flags: "-i, --interval <seconds>", description: msg.cli.options.interval(), parser: parseInt, defaultValue: 5 }
     ],
-    description: "Ver logs de un build específico (deprecado, usa 'jobs logs')"
+    description: msg.cli.deprecated({ description: msg.cli.commands.logs(), command: "jobs logs" })
   }
 );
 
@@ -165,8 +166,8 @@ program.command("fetch-jobs").action(fetchJobs);
 
 program
   .command("list-jobs")
-  .option("--folders", "Mostrar también las carpetas")
-  .option("--max-level <level>", "Nivel máximo de profundidad a mostrar", parseInt)
+  .option("--folders", msg.cli.options.folders())
+  .option("--max-level <level>", msg.cli.options.maxLevel(), parseInt)
   .action((options) => {
     listJobs({
       showFolders: options.folders !== false,
@@ -175,8 +176,8 @@ program
   });
 program
   .command("show-folders")
-  .option("--max-level <level>", "Nivel máximo de profundidad a mostrar", parseInt, 3)
-  .description("Mostrar solo la estructura de carpetas de Jenkins")
+  .option("--max-level <level>", msg.cli.options.maxLevel(), parseInt, 3)
+  .description(msg.cli.commands.showFolders())
   .action((options) => {
     showFolders({
       maxLevel: options.maxLevel
@@ -185,8 +186,8 @@ program
 
 program
   .command("search-jobs")
-  .argument("<searchTerm>", "Término de búsqueda")
-  .description("Buscar jobs por nombre en toda la estructura de Jenkins")
+  .argument("<searchTerm>", msg.cli.arg.searchTerm())
+  .description(msg.cli.commands.searchJobs())
   .action(searchJobs);
 
 setupUpdateCheck(program.version() as string);

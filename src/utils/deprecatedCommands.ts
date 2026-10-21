@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { logger } from "./logger";
 import { icons } from "./icons";
+import { msg } from "../i18n";
 
 /**
  * Creates a deprecated command alias that shows a warning message when used.
@@ -47,7 +48,7 @@ export function createDeprecatedAlias(
   }
   
   cmd.action((...args: any[]) => {
-    logger.warn(`${icons.warning}  El comando '${commandName}' está deprecado. Por favor usa '${newCommand}' en su lugar.`);
+    logger.warn(`${icons.warning}  ${msg.cli.deprecatedWarning({ name: commandName, command: newCommand })}`);
     return action(...args);
   });
 }

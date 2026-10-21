@@ -260,27 +260,23 @@ const config = {
 
 ### User Messages
 
-- Use emojis to improve readability:
-  - ✅ Success
-  - ❌ Error
-  - ⚠️  Warning
-  - 📋 Information
-  - 🔍 Search
-  - 🚀 Start/Execution
-  - 📁 Folders
-  - 🔹 Items/Jobs
+All user-facing text lives in the typed catalogs `src/i18n/en.ts` (source of truth) and `src/i18n/es.ts`, and is used as properties of `msg`:
 
 ```typescript
-// ✅ Good
-console.log(chalk.green("✅ Build started successfully"));
-console.log(chalk.yellow("⚠️  The job has no parameters"));
-console.error(chalk.red("❌ Error connecting to Jenkins"));
+import { msg } from "../i18n";
+import { icons } from "../utils/icons";
 
-// ❌ Avoid
-console.log("Build started");
-console.log("Warning: no params");
-console.error("Error");
+// ✅ Good: translated, typed (variables come from the {placeholders}), icon composed at the call site
+logger.info(formatters.success(`${icons.success} ${msg.success.configActivated({ name })}`));
+
+// ❌ Avoid: hardcoded text, only one language
+logger.info(chalk.green("✅ Configuration activated"));
 ```
+
+- Add the message to **both** catalogs: the compiler fails if `es` has different keys or `{placeholders}` than `en`.
+- Keep icons out of the text; use `icons` (it falls back to ASCII on terminals without emoji support).
+- Group messages by command or purpose (`errors`, `labels`, `prompts`, `builds`, ...) and reuse existing ones before adding new ones.
+- Commit messages, code comments and docs stay in English; `--debug` output is English only.
 
 ### Error Handling
 
