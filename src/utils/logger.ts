@@ -112,6 +112,24 @@ const stream = pretty({
 // pino-pretty como stream directo (no como transport en un worker): así la
 // salida sale en orden con los console.log de los comandos y no se pierden
 // líneas cuando el proceso termina.
-const logger = pino({ level }, stream);
+let errorCount = 0;
+
+/** Number of messages logged at error level or above; used by the debug-mode verdict. */
+export function errorsLogged(): number {
+  return errorCount;
+}
+
+const logger = pino(
+  {
+    level,
+    hooks: {
+      logMethod(args, method, logLevel) {
+        if (logLevel >= 50) errorCount++;
+        method.apply(this, args);
+      },
+    },
+  },
+  stream
+);
 
 export { logger };

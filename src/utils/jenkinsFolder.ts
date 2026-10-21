@@ -4,6 +4,7 @@ import { homedir } from "node:os";
 import { logger } from "./logger";
 import { formatters } from "./formatters";
 import { msg } from "../i18n";
+import { debugLog } from "./debug";
 
 export interface JenkinsJob {
   name: string;
@@ -595,7 +596,7 @@ export async function getWorkflowSteps(
       }
     } catch (wfapiError: any) {
       // Si wfapi no está disponible, intentar obtener información del build estándar
-      logger.debug(`wfapi no disponible, intentando método alternativo: ${wfapiError.message}`);
+      debugLog(`wfapi not available, trying the fallback: ${wfapiError.message}`);
     }
     
     // Método alternativo: obtener información básica del build

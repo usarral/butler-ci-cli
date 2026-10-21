@@ -4,6 +4,7 @@ import { logger } from "./logger";
 import { msg } from "../i18n";
 import { icons } from "../utils/icons";
 import { formatters } from "./formatters";
+import { attachDebugInterceptors, isDebugEnabled } from "./debug";
 
 let jenkinsInstance: AxiosInstance | null = null;
 
@@ -16,13 +17,17 @@ function createJenkinsClient(): AxiosInstance {
     process.exit(1);
   }
 
-  return axios.create({
+  const client = axios.create({
     baseURL: config.url,
     auth: {
       username: config.username,
       password: config.token,
     },
   });
+
+  if (isDebugEnabled()) attachDebugInterceptors(client);
+
+  return client;
 }
 
 export function getJenkinsClient(): AxiosInstance {
