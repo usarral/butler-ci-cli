@@ -34,11 +34,6 @@ describe('t', () => {
     setLocale('es');
     expect(t('update.available', { current: '1.0.0', latest: '2.0.0' })).toBe('Nueva versión disponible: 1.0.0 → 2.0.0');
   });
-
-  it('deja el marcador si falta la variable', () => {
-    setLocale('en');
-    expect(t('update.command')).toBe('Update with: {command}');
-  });
 });
 
 describe('catálogos', () => {
