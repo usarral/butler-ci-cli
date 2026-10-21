@@ -24,7 +24,7 @@ const program = new Command();
 program
   .name("butler-ci-cli")
   .description(msg.cli.description())
-  .version("3.8.0");
+  .version("3.8.1");
 
 // Comandos de configuración
 setupConfigCommands(program);
