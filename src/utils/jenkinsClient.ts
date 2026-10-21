@@ -1,7 +1,8 @@
 import axios, { AxiosInstance } from "axios";
 import { getJenkinsConfig } from "./config";
 import { logger } from "./logger";
-import { messages as msg } from "./messages";
+import { msg } from "../i18n";
+import { icons } from "../utils/icons";
 import { formatters } from "./formatters";
 
 let jenkinsInstance: AxiosInstance | null = null;
@@ -10,8 +11,8 @@ function createJenkinsClient(): AxiosInstance {
   const config = getJenkinsConfig();
   
   if (!config) {
-    logger.error(formatters.error(`${msg.icons.error} ${msg.errors.noConfig}`));
-    logger.info(formatters.secondary(`${msg.icons.info} ${msg.hints.createConfig}`));
+    logger.error(formatters.error(`${icons.error} ${msg.errors.noConfig()}`));
+    logger.info(formatters.secondary(`${icons.info} ${msg.hints.createConfig()}`));
     process.exit(1);
   }
 

@@ -1,7 +1,8 @@
 import { getBuildLogs, downloadBuildLogs, getJobInfo, getProgressiveBuildLogs, getBuildInfo } from "../utils/jenkinsFolder";
 import { getJenkinsConfig } from "../utils/config";
 import { logger } from "../utils/logger";
-import { msg } from "../utils/messages";
+import { msg } from "../i18n";
+import { icons } from "../utils/icons";
 import { formatters, printSeparator } from "../utils/formatters";
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -18,19 +19,19 @@ export async function showLogs(
     // Resolver 'latest' al número de build más reciente
     let resolvedBuildNumber = buildNumber;
     if (buildNumber.toLowerCase() === 'latest') {
-      logger.info(formatters.secondary(`${msg.icons.search} ${msg.info.resolvingLatest}\n`));
+      logger.info(formatters.secondary(`${icons.search} ${msg.info.resolvingLatest()}\n`));
       const jobInfo = await getJobInfo(jobName);
       
       if (!jobInfo.lastBuild) {
-        logger.error(msg.errors.noBuildHistory);
+        logger.error(msg.errors.noBuildHistory());
         process.exit(1);
       }
       
       resolvedBuildNumber = jobInfo.lastBuild.number.toString();
-      logger.info(formatters.success(`${msg.icons.check} ${msg.info.latestBuildFound(Number(resolvedBuildNumber))}\n`));
+      logger.info(formatters.success(`${icons.check} ${msg.info.latestBuildFound({ build: Number(resolvedBuildNumber) })}\n`));
     }
     
-    logger.info(`${msg.icons.logs} ${msg.info.fetchingLogs(resolvedBuildNumber, formatters.jobName(jobName))}\n`);
+    logger.info(`${icons.logs} ${msg.info.fetchingLogs({ build: resolvedBuildNumber, job: formatters.jobName(jobName) })}\n`);
     
     // Verificar que el job existe (si no se ha verificado ya)
     if (buildNumber.toLowerCase() !== 'latest') {
@@ -47,14 +48,14 @@ export async function showLogs(
     const logs = await getBuildLogs(jobName, resolvedBuildNumber);
     
     if (!logs || logs.trim().length === 0) {
-      logger.warn(`${msg.icons.warning}  ${msg.errors.noLogsAvailable}`);
+      logger.warn(`${icons.warning}  ${msg.errors.noLogsAvailable()}`);
       return;
     }
     
     // Si se solicita descarga
     if (options.download || options.editor) {
       const outputPath = await downloadBuildLogs(jobName, resolvedBuildNumber, options.output);
-      logger.info(formatters.success(`${msg.icons.success} Logs descargados en: ${formatters.highlight(outputPath)}\n`));
+      logger.info(formatters.success(`${icons.success} Logs descargados en: ${formatters.highlight(outputPath)}\n`));
       
       // Si se solicita abrir en editor
       if (options.editor) {
@@ -70,17 +71,17 @@ export async function showLogs(
     
     // Mostrar logs en terminal
     printSeparator();
-    console.log(formatters.title(`${msg.icons.file} ${msg.labels.buildLogs(Number(resolvedBuildNumber))}`));
+    console.log(formatters.title(`${icons.file} ${msg.labels.buildLogs({ build: Number(resolvedBuildNumber) })}`));
     printSeparator();
     console.log();
     console.log(logs);
     console.log();
     printSeparator();
-    console.log(formatters.secondary(msg.formatting.endOfLogs(logs.split('\n').length)));
+    console.log(formatters.secondary(msg.formatting.endOfLogs({ lines: logs.split('\n').length })));
     printSeparator();
     
   } catch (error: any) {
-    logger.error(`${msg.icons.error} ${error.message}`);
+    logger.error(`${icons.error} ${error.message}`);
     process.exit(1);
   }
 }
@@ -100,7 +101,7 @@ async function streamLogs(
   // Manejar Ctrl+C para salir limpiamente
   const sigintHandler = () => {
     console.log('\n');
-    logger.info(formatters.info(`${msg.icons.info} Streaming detenido por el usuario`));
+    logger.info(formatters.info(`${icons.info} Streaming detenido por el usuario`));
     process.exit(0);
   };
   
@@ -109,7 +110,7 @@ async function streamLogs(
   
   // Mostrar encabezado
   printSeparator();
-  console.log(formatters.title(`${msg.icons.file} ${msg.labels.buildLogs(Number(buildNumber))} - Streaming Mode`));
+  console.log(formatters.title(`${icons.file} ${msg.labels.buildLogs({ build: Number(buildNumber) })} - Streaming Mode`));
   console.log(formatters.dim(`Actualizando cada ${intervalSeconds} segundos. Presiona Ctrl+C para salir.`));
   printSeparator();
   console.log();
@@ -137,9 +138,9 @@ async function streamLogs(
           console.log();
           printSeparator();
           
-          const statusIcon = buildInfo.result === 'SUCCESS' ? msg.icons.success : 
-                            buildInfo.result === 'FAILURE' ? msg.icons.error : 
-                            msg.icons.info;
+          const statusIcon = buildInfo.result === 'SUCCESS' ? icons.success : 
+                            buildInfo.result === 'FAILURE' ? icons.error : 
+                            icons.info;
           const statusColor = buildInfo.result === 'SUCCESS' ? formatters.success : 
                              buildInfo.result === 'FAILURE' ? formatters.error : 
                              formatters.info;
@@ -163,7 +164,7 @@ async function streamLogs(
         await new Promise(resolve => setTimeout(resolve, intervalSeconds * 1000));
         
       } catch (error: any) {
-        logger.error(`${msg.icons.error} Error en streaming: ${error.message}`);
+        logger.error(`${icons.error} Error en streaming: ${error.message}`);
         isRunning = false;
       }
     }
@@ -178,7 +179,7 @@ async function streamLogs(
  */
 async function openInEditor(filePath: string): Promise<void> {
   if (!existsSync(filePath)) {
-    throw new Error(msg.errors.fileNotFound(filePath));
+    throw new Error(msg.errors.fileNotFound({ path: filePath }));
   }
   
   // Obtener editor configurado
@@ -192,20 +193,20 @@ async function openInEditor(filePath: string): Promise<void> {
     for (const ed of commonEditors) {
       if (await commandExists(ed)) {
         editor = ed;
-        logger.info(formatters.info(msg.info.usingDefaultEditor(editor)));
+        logger.info(formatters.info(`${icons.idea} ${msg.info.usingDefaultEditor({ editor })}`));
         break;
       }
     }
     
     if (!editor) {
-      logger.warn(formatters.warning(msg.info.noEditorConfigured));
-      logger.info(formatters.dim(msg.info.configureEditorHint));
-      logger.info(formatters.dim(`${msg.icons.file} ${msg.labels.fileSavedAt}: ${filePath}`));
+      logger.warn(formatters.warning(`${icons.warning}  ${msg.info.noEditorConfigured()}`));
+      logger.info(formatters.dim(`${icons.idea} ${msg.info.configureEditorHint()}`));
+      logger.info(formatters.dim(`${icons.file} ${msg.labels.fileSavedAt()}: ${filePath}`));
       return;
     }
   }
   
-  logger.info(formatters.info(`${msg.icons.rocket} ${msg.info.openingInEditor(editor)}...\n`));
+  logger.info(formatters.info(`${icons.rocket} ${msg.info.openingInEditor({ editor })}...\n`));
   
   // Abrir el editor
   const editorProcess = spawn(editor, [filePath], {
@@ -215,15 +216,15 @@ async function openInEditor(filePath: string): Promise<void> {
   });
   
   editorProcess.on('error', (error) => {
-    logger.error(formatters.error(`${msg.icons.error} ${msg.errors.openingEditor}: ${error.message}`));
-    logger.info(formatters.dim(`${msg.icons.file} ${msg.labels.fileSavedAt}: ${filePath}`));
+    logger.error(formatters.error(`${icons.error} ${msg.errors.openingEditor()}: ${error.message}`));
+    logger.info(formatters.dim(`${icons.file} ${msg.labels.fileSavedAt()}: ${filePath}`));
   });
   
   // Si el editor es VS Code u otro que no bloquea, no esperar
   const nonBlockingEditors = ['code', 'sublime', 'atom', 'gedit', 'kate'];
   if (nonBlockingEditors.includes(editor)) {
     editorProcess.unref();
-    logger.info(formatters.success(`${msg.icons.success} ${msg.success.editorOpened} ${msg.labels.fileSavedAt}: ${filePath}`));
+    logger.info(formatters.success(`${icons.success} ${msg.success.editorOpened()} ${msg.labels.fileSavedAt()}: ${filePath}`));
   }
 }
 
@@ -251,15 +252,15 @@ export async function downloadLogs(
   options: { output?: string }
 ) {
   try {
-    logger.info(`${msg.icons.download} ${msg.info.downloadingLogs} #${formatters.highlight(buildNumber)} ${msg.labels.fromJob}: ${formatters.highlight(jobName)}`);
+    logger.info(`${icons.download} ${msg.info.downloadingLogs()} #${formatters.highlight(buildNumber)} ${msg.labels.fromJob()}: ${formatters.highlight(jobName)}`);
     
     const outputPath = await downloadBuildLogs(jobName, buildNumber, options.output);
     
-    logger.info(formatters.success(`\n${msg.icons.success} ${msg.success.logsDownloaded}`));
-    logger.info(formatters.bold(`${msg.icons.file} ${msg.labels.location}: ${outputPath}`));
+    logger.info(formatters.success(`\n${icons.success} ${msg.success.logsDownloaded()}`));
+    logger.info(formatters.bold(`${icons.file} ${msg.labels.location()}: ${outputPath}`));
     
   } catch (error: any) {
-    logger.error(formatters.error(`${msg.icons.error} ${msg.errors.generic}: ${error.message}`));
+    logger.error(formatters.error(`${icons.error} ${msg.errors.generic()}: ${error.message}`));
     process.exit(1);
   }
 }

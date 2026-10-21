@@ -1,17 +1,18 @@
 import inquirer from "inquirer";
 import { configManager, JenkinsConfig } from "../../utils/config";
 import { logger } from "../../utils/logger";
-import { messages as msg } from "../../utils/messages";
+import { msg } from "../../i18n";
+import { icons } from "../../utils/icons";
 import { formatters } from "../../utils/formatters";
 
 export async function createConfig(): Promise<void> {
-  logger.info(formatters.info(`${msg.icons.gear} Crear nueva configuración de Jenkins\n`));
+  logger.info(formatters.info(`${icons.gear} Crear nueva configuración de Jenkins\n`));
 
   const answers = await inquirer.prompt([
     {
       type: "input",
       name: "name",
-      message: msg.prompts.configName,
+      message: msg.prompts.configName(),
       validate: (input) => {
         if (!input.trim()) {
           return "El nombre es requerido";
@@ -25,7 +26,7 @@ export async function createConfig(): Promise<void> {
     {
       type: "input",
       name: "url",
-      message: msg.prompts.jenkinsUrl,
+      message: msg.prompts.jenkinsUrl(),
       validate: (input) => {
         if (!input.trim()) {
           return "La URL es requerida";
@@ -41,24 +42,24 @@ export async function createConfig(): Promise<void> {
     {
       type: "input",
       name: "username",
-      message: msg.prompts.username,
+      message: msg.prompts.username(),
       validate: (input) => input.trim() ? true : "El usuario es requerido",
     },
     {
       type: "password",
       name: "token",
-      message: msg.prompts.token,
+      message: msg.prompts.token(),
       validate: (input) => input.trim() ? true : "El token es requerido",
     },
     {
       type: "input",
       name: "description",
-      message: msg.prompts.description,
+      message: msg.prompts.description(),
     },
     {
       type: "confirm",
       name: "setAsCurrent",
-      message: msg.prompts.setAsActive,
+      message: msg.prompts.setAsActive(),
       default: true,
     },
   ]);
@@ -73,15 +74,15 @@ export async function createConfig(): Promise<void> {
 
   try {
     configManager.saveConfig(config);
-    logger.info(formatters.success(`${msg.icons.success} ${msg.success.configCreated(config.name)}`));
+    logger.info(formatters.success(`${icons.success} ${msg.success.configCreated({ name: config.name })}`));
 
     if (answers.setAsCurrent) {
       configManager.setCurrentConfig(config.name);
-      logger.info(formatters.success(`${msg.icons.success} ${msg.success.configActivated(config.name)}`));
+      logger.info(formatters.success(`${icons.success} ${msg.success.configActivated({ name: config.name })}`));
     }
 
-    logger.info(formatters.secondary(`${msg.icons.folder} Guardada en: ${configManager.getConfigDir()}`));
+    logger.info(formatters.secondary(`${icons.folder} Guardada en: ${configManager.getConfigDir()}`));
   } catch (error) {
-    logger.error(formatters.error(`${msg.icons.error} Error creando la configuración: ${error}`));
+    logger.error(formatters.error(`${icons.error} Error creando la configuración: ${error}`));
   }
 }

@@ -1,11 +1,13 @@
 import { getJobInfo, getWorkflowSteps, WorkflowStage } from "../utils/jenkinsFolder";
 import { logger } from "../utils/logger";
-import { msg } from "../utils/messages";
+import { msg } from "../i18n";
+import { icons } from "../utils/icons";
+import { jobStatus } from "../utils/jobStatus";
 import { formatters, printHeader, TableBuilder } from "../utils/formatters";
 
 export async function jobSteps(jobName: string, buildNumber: string) {
   try {
-    logger.info(`${msg.icons.search} Obteniendo pasos del build ${formatters.buildNumber(buildNumber)} del job ${formatters.jobName(jobName)}`);
+    logger.info(`${icons.search} Obteniendo pasos del build ${formatters.buildNumber(buildNumber)} del job ${formatters.jobName(jobName)}`);
     
     // Validar que el job existe y es ejecutable
     const jobData = await getJobInfo(jobName);
@@ -18,22 +20,22 @@ export async function jobSteps(jobName: string, buildNumber: string) {
     let actualBuildNumber = buildNumber;
     if (buildNumber.toLowerCase() === 'latest') {
       if (!jobData.lastBuild) {
-        throw new Error(msg.errors.noBuildHistory);
+        throw new Error(msg.errors.noBuildHistory());
       }
       actualBuildNumber = String(jobData.lastBuild.number);
-      logger.info(`${msg.icons.info} Último build: #${actualBuildNumber}`);
+      logger.info(`${icons.info} Último build: #${actualBuildNumber}`);
     }
     
     // Obtener los pasos del workflow
     const stages = await getWorkflowSteps(jobName, actualBuildNumber);
     
     if (!stages || stages.length === 0) {
-      logger.info(`${msg.icons.info} No se encontraron pasos para el build #${actualBuildNumber}`);
+      logger.info(`${icons.info} No se encontraron pasos para el build #${actualBuildNumber}`);
       return;
     }
     
     // Mostrar información del job y build
-    printHeader(`${msg.icons.file} Pasos del Build`);
+    printHeader(`${icons.file} Pasos del Build`);
     
     const headerTable = new TableBuilder()
       .add('Job:', jobData.fullName || jobName)
@@ -48,7 +50,7 @@ export async function jobSteps(jobName: string, buildNumber: string) {
     });
     
   } catch (error: any) {
-    logger.error(`${msg.icons.error} ${error.message}`);
+    logger.error(`${icons.error} ${error.message}`);
     process.exit(1);
   }
 }
@@ -85,20 +87,20 @@ function displayStep(step: any, stepNumber: number) {
   console.log(`    ${stepNumber}. ${step.name} - ${status}${duration}`);
   
   if (step.error) {
-    console.log(`       ${formatters.error(`${msg.icons.error} Error: ${step.error.message}`)}`);
+    console.log(`       ${formatters.error(`${icons.error} Error: ${step.error.message}`)}`);
   }
 }
 
 function getStatusDisplay(status: string): string {
   const statusMap: Record<string, string> = {
-    'SUCCESS': msg.jobStatus.success,
-    'FAILED': msg.jobStatus.failed,
-    'FAILURE': msg.jobStatus.failed,
-    'UNSTABLE': msg.jobStatus.unstable,
-    'ABORTED': msg.jobStatus.aborted,
-    'IN_PROGRESS': formatters.info(`${msg.icons.running} En progreso`),
-    'NOT_EXECUTED': formatters.secondary(`${msg.icons.skipped} No ejecutado`),
-    'PAUSED_PENDING_INPUT': formatters.warning(`${msg.icons.paused} Esperando entrada`),
+    'SUCCESS': jobStatus.success(),
+    'FAILED': jobStatus.failed(),
+    'FAILURE': jobStatus.failed(),
+    'UNSTABLE': jobStatus.unstable(),
+    'ABORTED': jobStatus.aborted(),
+    'IN_PROGRESS': formatters.info(`${icons.running} En progreso`),
+    'NOT_EXECUTED': formatters.secondary(`${icons.skipped} No ejecutado`),
+    'PAUSED_PENDING_INPUT': formatters.warning(`${icons.paused} Esperando entrada`),
   };
   
   return statusMap[status] || formatters.secondary(status);
