@@ -11,6 +11,7 @@ import {
   getBuildLogs,
   getBuilds,
   getProgressiveBuildLogs,
+  stripConsoleNotes,
   getBuildInfo,
   abortBuild,
 } from '../src/utils/jenkinsFolder';
@@ -101,6 +102,14 @@ describe('Jenkins Folder Operations', () => {
       description: null,
     });
     
+    mockAxios
+      .onGet(/\/job\/notes-job\/1\/logText\/progressiveText/)
+      .reply(
+        200,
+        'Started by user \u001B[8mha:////4J/64RyGBA28Hw6Oqy+MSSmtQTKMpNIju2Ayn+1PRcQXAA==\u001B[0madmin\n[Pipeline] echo\n',
+        { 'x-text-size': '99', 'x-more-data': 'false' }
+      );
+
     // Mocks para errores 404
     mockAxios.onGet('/job/nonexistent/api/json').reply(404);
     mockAxios.onGet(/\/job\/nonexistent\/api\/json\?/).reply(404);
@@ -374,6 +383,13 @@ describe('Jenkins Folder Operations', () => {
       expect(result.hasMore).toBe(false);
     });
 
+    it('should strip Jenkins console notes from the text', async () => {
+      const result = await getProgressiveBuildLogs('notes-job', '1', 0);
+
+      expect(result.text).toBe('Started by user admin\n[Pipeline] echo\n');
+      expect(result.size).toBe(99);
+    });
+
     it('should throw error for invalid build', async () => {
 
       await expect(getProgressiveBuildLogs('test-job-1', '999', 0)).rejects.toThrow();
@@ -465,5 +481,13 @@ describe('Jenkins Folder Operations', () => {
       await expect(abortBuild('test-job-1', 999)).rejects.toThrow('999');
       expect(mockAxios.history.post).toHaveLength(0);
     });
+  });
+});
+
+describe('stripConsoleNotes', () => {
+  it('removes every note and keeps ordinary ANSI colors', () => {
+    const note = '\u001B[8mha:////AAAA+/=\u001B[0m';
+    expect(stripConsoleNotes(`a${note}b${note}c`)).toBe('abc');
+    expect(stripConsoleNotes('\u001B[32mOK\u001B[0m')).toBe('\u001B[32mOK\u001B[0m');
   });
 });

@@ -363,6 +363,14 @@ export interface ProgressiveLogResult {
   size: number;
 }
 
+// Jenkins incrusta "console notes" (enlaces, anotaciones) en progressiveText como
+// ESC[8m + "ha:////" + base64 + ESC[0m; en un terminal sin soporte para texto oculto se ven como basura.
+const CONSOLE_NOTE = /\u001B\[8mha:\/\/\/\/[A-Za-z0-9+/=]*\u001B\[0m/g;
+
+export function stripConsoleNotes(text: string): string {
+  return text.replace(CONSOLE_NOTE, '');
+}
+
 /**
  * Obtiene los logs de un build de forma progresiva (streaming)
  * Usa el endpoint logText/progressiveText para obtener solo los nuevos logs
@@ -391,7 +399,7 @@ export async function getProgressiveBuildLogs(
     const hasMore = response.headers['x-more-data'] === 'true';
     
     return {
-      text: response.data || '',
+      text: stripConsoleNotes(response.data || ''),
       hasMore,
       size: textSize
     };

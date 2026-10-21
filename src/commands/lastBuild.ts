@@ -69,7 +69,7 @@ function displayBuildTiming(buildData: any) {
     }
   }
   
-  if (!buildData.result && buildData.estimatedDuration) {
+  if (!buildData.result && buildData.estimatedDuration > 0) {
     const estimatedMinutes = Math.floor(buildData.estimatedDuration / 60000);
     table.add(msg.labels.estimatedDuration(), `~${estimatedMinutes}m`);
   }
