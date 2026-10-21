@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { msg } from "../../i18n";
 import { jobInfo } from "../jobInfo";
 import { jobParams } from "../jobParams";
 import { jobSteps } from "../jobSteps";
@@ -11,71 +12,71 @@ import { abort } from "../abort";
 export function setupJobsCommands(program: Command): void {
   const jobsCommand = program
     .command("jobs")
-    .description("Gestionar y consultar información de jobs de Jenkins");
+    .description(msg.cli.jobsDescription());
 
   jobsCommand
     .command("info")
-    .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
-    .description("Obtener información detallada de un job")
+    .argument("<jobName>", msg.cli.arg.jobName())
+    .description(msg.cli.commands.info())
     .action(jobInfo);
 
   jobsCommand
     .command("params")
-    .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
-    .description("Mostrar los parámetros requeridos por un job")
+    .argument("<jobName>", msg.cli.arg.jobName())
+    .description(msg.cli.commands.params())
     .action(jobParams);
 
   jobsCommand
     .command("steps")
-    .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
-    .argument("<buildNumber>", "Número del build o 'latest' para el más reciente")
-    .description("Mostrar los pasos (steps) de un build específico")
+    .argument("<jobName>", msg.cli.arg.jobName())
+    .argument("<buildNumber>", msg.cli.arg.buildNumber())
+    .description(msg.cli.commands.steps())
     .action(jobSteps);
 
   jobsCommand
     .command("last-build")
-    .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
-    .description("Obtener información del último build de un job")
+    .argument("<jobName>", msg.cli.arg.jobName())
+    .description(msg.cli.commands.lastBuild())
     .action(lastBuild);
 
   jobsCommand
     .command("build")
-    .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
-    .option("--params <params>", "Parámetros en formato key=value,key2=value2")
-    .description("Ejecutar un build de forma asistida")
+    .argument("<jobName>", msg.cli.arg.jobName())
+    .option("--params <params>", msg.cli.options.params())
+    .description(msg.cli.commands.build())
     .action(build);
 
   jobsCommand
     .command("list-builds")
-    .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
-    .option("--status <status>", "Filtrar por estado (SUCCESS, FAILURE, UNSTABLE, ABORTED, RUNNING)")
-    .option("--branch <branch>", "Filtrar por rama")
-    .option("--since <date>", "Filtrar builds desde esta fecha (ISO 8601)")
-    .option("--until <date>", "Filtrar builds hasta esta fecha (ISO 8601)")
-    .option("--offset <number>", "Número de builds a omitir", parseInt)
-    .option("--limit <number>", "Número máximo de builds a mostrar", parseInt, 50)
-    .option("--sort-by <field>", "Campo por el que ordenar (number, timestamp)", "number")
-    .option("--order <order>", "Orden de clasificación (asc, desc)", "desc")
-    .description("Listar builds de un job con opciones de filtrado y paginación")
+    .argument("<jobName>", msg.cli.arg.jobName())
+    .option("--status <status>", msg.cli.options.status())
+    .option("--branch <branch>", msg.cli.options.branch())
+    .option("--since <date>", msg.cli.options.since())
+    .option("--until <date>", msg.cli.options.until())
+    .option("--offset <number>", msg.cli.options.offset(), parseInt)
+    .option("--limit <number>", msg.cli.options.limit(), parseInt, 50)
+    .option("--sort-by <field>", msg.cli.options.sortBy(), "number")
+    .option("--order <order>", msg.cli.options.order(), "desc")
+    .description(msg.cli.commands.listBuilds())
     .action(listBuilds);
 
   jobsCommand
     .command("logs")
-    .argument("<jobName>", "Nombre del job")
-    .argument("<buildNumber>", "Número del build o 'latest' para el más reciente")
-    .option("-d, --download", "Descargar logs a archivo")
-    .option("-e, --editor", "Abrir logs en el editor configurado")
-    .option("-o, --output <path>", "Ruta de salida para el archivo de logs")
-    .option("-s, --stream", "Ver logs en tiempo real (streaming mode)")
-    .option("-i, --interval <seconds>", "Intervalo de actualización en segundos para streaming (default: 5)", parseInt, 5)
-    .description("Ver logs de un build específico")
+    .argument("<jobName>", msg.cli.arg.jobNameShort())
+    .argument("<buildNumber>", msg.cli.arg.buildNumber())
+    .option("-d, --download", msg.cli.options.download())
+    .option("-e, --editor", msg.cli.options.editor())
+    .option("-o, --output <path>", msg.cli.options.output())
+    .option("-s, --stream", msg.cli.options.stream())
+    .option("-i, --interval <seconds>", msg.cli.options.interval(), parseInt, 5)
+    .description(msg.cli.commands.logs())
     .action(showLogs);
 
   jobsCommand
     .command("abort")
-    .argument("<jobName>", "Nombre del job (puede incluir carpetas: folder/subfolder/job)")
-    .argument("<buildNumber>", "Número del build o 'latest' para el más reciente")
-    .option("-y, --yes", "Abortar sin pedir confirmación")
-    .description("Abortar un build en ejecución")
+    .argument("<jobName>", msg.cli.arg.jobName())
+    .argument("<buildNumber>", msg.cli.arg.buildNumber())
+    .option("-y, --yes", msg.cli.options.yes())
+    .description(msg.cli.commands.abort())
     .action(abort);
 }

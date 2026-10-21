@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { icons } from './icons';
+import { msg } from '../i18n';
 
 /**
  * Utilidades para formateo y presentación de datos
@@ -149,7 +150,7 @@ export const formatters = {
   /**
    * Formatea un booleano como Sí/No con color
    */
-  boolean: (value: boolean, yesText = 'Sí', noText = 'No'): string => {
+  boolean: (value: boolean, yesText = msg.jobStatus.yes(), noText = msg.jobStatus.no()): string => {
     return value ? chalk.green(yesText) : chalk.red(noText);
   },
 
