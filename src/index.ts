@@ -15,6 +15,7 @@ import { jobSteps } from "./commands/jobSteps";
 import { setupConfigCommands } from "./commands/config";
 import { setupJobsCommands } from "./commands/jobs";
 import { createDeprecatedAlias } from "./utils/deprecatedCommands";
+import { setupUpdateCheck } from "./utils/updateCheck";
 
 
 const program = new Command();
@@ -177,5 +178,7 @@ program
   .argument("<searchTerm>", "Término de búsqueda")
   .description("Buscar jobs por nombre en toda la estructura de Jenkins")
   .action(searchJobs);
+
+setupUpdateCheck(program.version() as string);
 
 program.parse();
