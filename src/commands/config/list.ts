@@ -5,13 +5,13 @@ import { icons } from "../../utils/icons";
 import { formatters } from "../../utils/formatters";
 
 export async function listConfigs(): Promise<void> {
-  logger.info(formatters.info(`${icons.list} Configuraciones de Jenkins disponibles\n`));
+  logger.info(formatters.info(`${icons.list} ${msg.config.list.title()}\n`));
 
   const configs = configManager.listConfigs();
   const currentConfig = configManager.getCurrentConfig();
 
   if (configs.length === 0) {
-    logger.warn(formatters.warning(`${icons.warning} No hay configuraciones guardadas`));
+    logger.warn(formatters.warning(`${icons.warning} ${msg.config.list.none()}`));
     logger.info(formatters.secondary(`${icons.info} ${msg.hints.createConfig()}`));
     return;
   }
@@ -21,7 +21,7 @@ export async function listConfigs(): Promise<void> {
     const isActive = configName === currentConfig;
     
     if (config) {
-      const status = isActive ? formatters.success(`${icons.dotActive} ACTIVA`) : formatters.secondary(icons.dotInactive);
+      const status = isActive ? formatters.success(`${icons.dotActive} ${msg.config.list.activeBadge()}`) : formatters.secondary(icons.dotInactive);
       logger.info(`${status} ${formatters.highlight(configName)}`);
       logger.info(`   ${icons.location} ${config.url}`);
       logger.info(`   ${icons.user} ${config.username}`);
@@ -33,9 +33,9 @@ export async function listConfigs(): Promise<void> {
   }
 
   if (!currentConfig) {
-    logger.warn(formatters.warning(`${icons.warning} No hay ninguna configuración activa`));
+    logger.warn(formatters.warning(`${icons.warning} ${msg.config.list.noActive()}`));
     logger.info(formatters.secondary(`${icons.info} ${msg.hints.activateConfig()}`));
   }
 
-  logger.info(formatters.secondary(`${icons.folder} Ubicación: ${configManager.getConfigDir()}`));
+  logger.info(formatters.secondary(`${icons.folder} ${msg.labels.location()} ${configManager.getConfigDir()}`));
 }

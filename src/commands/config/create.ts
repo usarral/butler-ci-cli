@@ -6,7 +6,7 @@ import { icons } from "../../utils/icons";
 import { formatters } from "../../utils/formatters";
 
 export async function createConfig(): Promise<void> {
-  logger.info(formatters.info(`${icons.gear} Crear nueva configuración de Jenkins\n`));
+  logger.info(formatters.info(`${icons.gear} ${msg.config.create.title()}\n`));
 
   const answers = await inquirer.prompt([
     {
@@ -15,10 +15,10 @@ export async function createConfig(): Promise<void> {
       message: msg.prompts.configName(),
       validate: (input) => {
         if (!input.trim()) {
-          return "El nombre es requerido";
+          return msg.config.create.nameRequired();
         }
         if (configManager.listConfigs().includes(input.trim())) {
-          return "Ya existe una configuración con ese nombre";
+          return msg.config.create.nameExists();
         }
         return true;
       },
@@ -29,13 +29,13 @@ export async function createConfig(): Promise<void> {
       message: msg.prompts.jenkinsUrl(),
       validate: (input) => {
         if (!input.trim()) {
-          return "La URL es requerida";
+          return msg.config.create.urlRequired();
         }
         try {
           new URL(input.trim());
           return true;
         } catch {
-          return "Por favor ingresa una URL válida";
+          return msg.config.create.urlInvalid();
         }
       },
     },
@@ -43,13 +43,13 @@ export async function createConfig(): Promise<void> {
       type: "input",
       name: "username",
       message: msg.prompts.username(),
-      validate: (input) => input.trim() ? true : "El usuario es requerido",
+      validate: (input) => input.trim() ? true : msg.config.create.userRequired(),
     },
     {
       type: "password",
       name: "token",
       message: msg.prompts.token(),
-      validate: (input) => input.trim() ? true : "El token es requerido",
+      validate: (input) => input.trim() ? true : msg.config.create.tokenRequired(),
     },
     {
       type: "input",
@@ -81,8 +81,8 @@ export async function createConfig(): Promise<void> {
       logger.info(formatters.success(`${icons.success} ${msg.success.configActivated({ name: config.name })}`));
     }
 
-    logger.info(formatters.secondary(`${icons.folder} Guardada en: ${configManager.getConfigDir()}`));
+    logger.info(formatters.secondary(`${icons.folder} ${msg.config.create.savedAt({ dir: configManager.getConfigDir() })}`));
   } catch (error) {
-    logger.error(formatters.error(`${icons.error} Error creando la configuración: ${error}`));
+    logger.error(formatters.error(`${icons.error} ${msg.config.create.failed({ error: String(error) })}`));
   }
 }

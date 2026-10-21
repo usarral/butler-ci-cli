@@ -21,6 +21,7 @@ export const en = {
     createConfig: "Use 'butler-ci-cli config create' to create a configuration.",
     activateConfig: "Use 'butler-ci-cli config use <name>' to activate a configuration.",
     editConfig: "Use 'butler-ci-cli config edit <name>' or activate a configuration first.",
+    listConfigs: "Use 'butler-ci-cli config list' to see the available ones.",
   },
 
   success: {
@@ -139,5 +140,66 @@ export const en = {
 
   formatting: {
     endOfLogs: "End of logs ({lines} lines)",
+  },
+
+  config: {
+    command: {
+      description: "Manage Jenkins configurations",
+      create: "Create a new Jenkins configuration",
+      list: "List all configurations",
+      use: "Set a configuration as active",
+      useName: "Configuration name",
+      delete: "Delete a configuration",
+      deleteName: "Name of the configuration to delete",
+      current: "Show the active configuration",
+      edit: "Edit a configuration's preferences (editor, log viewer, etc.)",
+      editName: "Name of the configuration to edit (uses the current one if omitted)",
+    },
+    list: {
+      title: "Available Jenkins configurations",
+      none: "No configurations saved",
+      noActive: "There is no active configuration",
+      activeBadge: "ACTIVE",
+    },
+    current: {
+      title: "Active configuration",
+      noActive: "There is no active configuration",
+      notFound: "Error: active configuration '{name}' not found",
+      token: "Token: {value}",
+    },
+    use: {
+      nameRequired: "You must specify the configuration name",
+      usage: "Usage: butler-ci-cli config use <name>",
+      server: "Server: {url}",
+      user: "User: {username}",
+      failed: "Error setting configuration '{name}' as active",
+    },
+    create: {
+      title: "Create a new Jenkins configuration",
+      nameRequired: "The name is required",
+      nameExists: "A configuration with that name already exists",
+      urlRequired: "The URL is required",
+      urlInvalid: "Please enter a valid URL",
+      userRequired: "The username is required",
+      tokenRequired: "The token is required",
+      savedAt: "Saved at: {dir}",
+      failed: "Error creating the configuration: {error}",
+    },
+    delete: {
+      nothingToDelete: "There are no configurations to delete",
+      noneSpecified: "No configuration was specified for deletion",
+      cancelled: "Operation cancelled",
+      noActiveNow: "There is no active configuration now",
+      failed: "Error deleting configuration '{name}'",
+    },
+    edit: {
+      title: "Edit configuration preferences",
+    },
+    store: {
+      loadFailed: "Error loading config {name}: {error}",
+      deleteFailed: "Error deleting config {name}: {error}",
+      setCurrentFailed: "Error setting current config to {name}: {error}",
+      clearCurrentFailed: "Error clearing current config: {error}",
+    },
   },
 } as const;
