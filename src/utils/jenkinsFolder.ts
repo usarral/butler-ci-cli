@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { logger } from "./logger";
 import { formatters } from "./formatters";
+import { msg } from "../i18n";
 
 export interface JenkinsJob {
   name: string;
@@ -63,7 +64,7 @@ export async function getAllJobsRecursive(path: string = ""): Promise<JobTreeIte
     
     return items;
   } catch (error: any) {
-    logger.error(formatters.error(`Error obteniendo items de ${path || 'raíz'}: ${error.message}`));
+    logger.error(formatters.error(msg.api.itemsError({ path: path || msg.api.root(), error: error.message })));
     return [];
   }
 }
@@ -120,7 +121,7 @@ export async function getJobInfo(jobFullName: string): Promise<any> {
     const response = await jenkins.get(`/job/${jobPath}/api/json`);
     return response.data;
   } catch (error: any) {
-    throw new Error(`Error obteniendo información del job ${jobFullName}: ${error.message}`);
+    throw new Error(msg.api.jobInfoError({ job: jobFullName, error: error.message }));
   }
 }
 
@@ -135,7 +136,7 @@ export async function getLastBuild(jobFullName: string): Promise<any> {
     const response = await jenkins.get(`/job/${jobPath}/lastBuild/api/json`);
     return response.data;
   } catch (error: any) {
-    throw new Error(`Error obteniendo último build del job ${jobFullName}: ${error.message}`);
+    throw new Error(msg.api.lastBuildError({ job: jobFullName, error: error.message }));
   }
 }
 
@@ -153,7 +154,7 @@ export async function getBuildInfo(
     const response = await jenkins.get(`/job/${jobPath}/${buildNumber}/api/json?tree=number,url,result,timestamp,duration,building,displayName,fullDisplayName,description`);
     return response.data;
   } catch (error: any) {
-    throw new Error(`Error obteniendo información del build #${buildNumber} del job ${jobFullName}: ${error.message}`);
+    throw new Error(msg.api.buildInfoError({ build: buildNumber, job: jobFullName, error: error.message }));
   }
 }
 
@@ -238,7 +239,7 @@ export async function getJobParameters(jobFullName: string): Promise<JobParamete
       return parameter;
     });
   } catch (error: any) {
-    throw new Error(`Error obteniendo parámetros del job ${jobFullName}: ${error.message}`);
+    throw new Error(msg.api.paramsError({ job: jobFullName, error: error.message }));
   }
 }
 
@@ -320,10 +321,10 @@ export async function buildJob(
     
     return {
       queueUrl,
-      message: "Build iniciado correctamente"
+      message: msg.success.buildStarted()
     };
   } catch (error: any) {
-    throw new Error(`Error ejecutando build del job ${jobFullName}: ${error.message}`);
+    throw new Error(msg.api.buildError({ job: jobFullName, error: error.message }));
   }
 }
 
@@ -349,7 +350,7 @@ export async function getBuildLogs(
     
     return response.data;
   } catch (error: any) {
-    throw new Error(`Error obteniendo logs del build #${buildNumber} del job ${jobFullName}: ${error.message}`);
+    throw new Error(msg.api.logsError({ build: buildNumber, job: jobFullName, error: error.message }));
   }
 }
 
@@ -395,7 +396,7 @@ export async function getProgressiveBuildLogs(
       size: textSize
     };
   } catch (error: any) {
-    throw new Error(`Error obteniendo logs progresivos del build #${buildNumber} del job ${jobFullName}: ${error.message}`);
+    throw new Error(msg.api.progressiveLogsError({ build: buildNumber, job: jobFullName, error: error.message }));
   }
 }
 
@@ -512,7 +513,7 @@ export async function getBuilds(
     
     return builds.slice(offset, offset + limit);
   } catch (error: any) {
-    throw new Error(`Error obteniendo builds del job ${jobFullName}: ${error.message}`);
+    throw new Error(msg.api.buildsError({ job: jobFullName, error: error.message }));
   }
 }
 
@@ -628,7 +629,7 @@ export async function getWorkflowSteps(
     }];
     
   } catch (error: any) {
-    throw new Error(`Error obteniendo pasos del build #${buildNumber} del job ${jobFullName}: ${error.message}`);
+    throw new Error(msg.api.stepsError({ build: buildNumber, job: jobFullName, error: error.message }));
   }
 }
 
@@ -659,7 +660,9 @@ export async function abortBuild(
     return {
       aborted: false,
       buildNumber: build.number,
-      message: `El build #${build.number} ya ha terminado${build.result ? ` (${build.result})` : ''}: solo se pueden abortar builds en ejecución.`
+      message: build.result
+        ? msg.warnings.buildNotRunningWithResult({ build: build.number, result: build.result })
+        : msg.warnings.buildNotRunning({ build: build.number })
     };
   }
 
@@ -676,12 +679,12 @@ export async function abortBuild(
     return {
       aborted: true,
       buildNumber: build.number,
-      message: `Se ha solicitado abortar el build #${build.number} del job ${jobFullName}. Puede tardar unos segundos en terminar.`
+      message: msg.api.abortRequested({ build: build.number, job: jobFullName })
     };
   } catch (error: any) {
     if (error.response?.status === 403) {
-      throw new Error(`Sin permisos para abortar el build #${build.number} del job ${jobFullName} (403).`);
+      throw new Error(msg.api.abortForbidden({ build: build.number, job: jobFullName }));
     }
-    throw new Error(`Error abortando el build #${build.number} del job ${jobFullName}: ${error.message}`);
+    throw new Error(msg.api.abortError({ build: build.number, job: jobFullName, error: error.message }));
   }
 }

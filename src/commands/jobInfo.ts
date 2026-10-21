@@ -39,7 +39,7 @@ export async function jobInfo(jobName: string) {
       table.add(msg.labels.type(), getJobTypeDisplay(jobData._class));
       
       if (jobData.jobs && jobData.jobs.length > 0) {
-        table.add('Sub-items:', String(jobData.jobs.length));
+        table.add(msg.labels.subItems(), String(jobData.jobs.length));
       }
     }
     

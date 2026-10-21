@@ -7,16 +7,16 @@ import chalk from "chalk";
 
 export async function searchJobs(searchTerm: string) {
   try {
-    logger.info(`${icons.search} Buscando jobs que contengan: ${formatters.highlight(searchTerm)}`);
+    logger.info(`${icons.search} ${msg.search.searching({ term: formatters.highlight(searchTerm) })}`);
     
     const matchingJobs = await findJobsByName(searchTerm);
     
     if (matchingJobs.length === 0) {
-      logger.warn(formatters.warning(`${icons.warning} No se encontraron jobs que contengan "${searchTerm}".`));
+      logger.warn(formatters.warning(`${icons.warning} ${msg.search.none({ term: searchTerm })}`));
       return;
     }
     
-    logger.info(`\n${icons.list} Jobs encontrados (${formatters.success(matchingJobs.length.toString())}):`);
+    logger.info(`\n${icons.list} ${msg.search.found({ count: formatters.success(matchingJobs.length.toString()) })}`);
     logger.info("==================================");
     
     for (const job of matchingJobs) {
@@ -36,11 +36,11 @@ export async function searchJobs(searchTerm: string) {
     
     // Agrupar por carpetas padre si hay muchos resultados
     if (matchingJobs.length > 10) {
-      logger.info(`\n${icons.list} Resumen por carpetas:`);
+      logger.info(`\n${icons.list} ${msg.search.byFolder()}`);
       const folderGroups = groupJobsByParentFolder(matchingJobs);
       
       for (const [folder, count] of Object.entries(folderGroups)) {
-        logger.info(`   ${icons.folder} ${formatters.info(folder || "Raíz")}: ${formatters.success(count.toString())} jobs`);
+        logger.info(`   ${icons.folder} ${msg.search.folderCount({ folder: formatters.info(folder || msg.search.root()), count: formatters.success(count.toString()) })}`);
       }
     }
     

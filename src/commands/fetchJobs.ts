@@ -18,7 +18,7 @@ export async function fetchJobs() {
     
     // Mostrar algunos ejemplos de lo que se encontró
     if (jobNames.length > 0) {
-      logger.info(`\n${icons.list} Ejemplos de jobs encontrados:`);
+      logger.info(`\n${icons.list} ${msg.fetch.examples()}`);
       const examples = jobNames.slice(0, 5);
       for (const name of examples) {
         const parts = name.split('/');
@@ -30,7 +30,7 @@ export async function fetchJobs() {
       }
       
       if (jobNames.length > 5) {
-        logger.info(`   ... y ${jobNames.length - 5} más`);
+        logger.info(`   ${msg.fetch.more({ count: jobNames.length - 5 })}`);
       }
     }
     

@@ -7,17 +7,17 @@ import { formatters } from "../utils/formatters";
 export async function showFolders(options?: { maxLevel?: number }) {
   try {
     const maxLevel = options?.maxLevel || 3;
-    logger.info(`${icons.search} Mostrando estructura de carpetas (máximo ${maxLevel} niveles)...`);
+    logger.info(`${icons.search} ${msg.folders.showing({ levels: maxLevel })}`);
     
     const items = await getFolderStructure(maxLevel);
     const folders = items.filter(item => item.type === 'folder');
     
     if (folders.length === 0) {
-      logger.warn(formatters.warning(`${icons.warning} No se encontraron carpetas en Jenkins.`));
+      logger.warn(formatters.warning(`${icons.warning} ${msg.folders.none()}`));
       return;
     }
     
-    logger.info(`\n${icons.folder} Estructura de Carpetas:`);
+    logger.info(`\n${icons.folder} ${msg.folders.structure()}`);
     logger.info("===========================");
     
     for (const folder of folders) {
@@ -26,7 +26,7 @@ export async function showFolders(options?: { maxLevel?: number }) {
       logger.info(`${indent}   ${icons.location} ${formatters.secondary(folder.fullName)}`);
     }
     
-    logger.info(`\n${icons.list} Total de carpetas: ${formatters.success(folders.length.toString())}`);
+    logger.info(`\n${icons.list} ${msg.folders.total({ count: formatters.success(folders.length.toString()) })}`);
     
     // Mostrar estadísticas por nivel
     const levelStats: Record<number, number> = {};
@@ -34,10 +34,10 @@ export async function showFolders(options?: { maxLevel?: number }) {
       levelStats[folder.level] = (levelStats[folder.level] || 0) + 1;
     }
     
-    logger.info(`\n${icons.chart} Distribución por niveles:`);
+    logger.info(`\n${icons.chart} ${msg.folders.byLevel()}`);
     for (const [level, count] of Object.entries(levelStats)) {
-      const levelName = level === '0' ? 'Raíz' : `Nivel ${level}`;
-      logger.info(`   ${levelName}: ${formatters.success(count.toString())} carpetas`);
+      const levelName = level === '0' ? msg.folders.root() : msg.folders.level({ level });
+      logger.info(`   ${msg.folders.levelCount({ name: levelName, count: formatters.success(count.toString()) })}`);
     }
     
   } catch (error: any) {
