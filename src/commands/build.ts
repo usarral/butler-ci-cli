@@ -59,7 +59,7 @@ export async function build(jobName: string, options: { params?: string }) {
     logger.info(formatters.success(`${icons.success} ${result.message}`));
     
     if (result.queueUrl) {
-      logger.info(formatters.secondary(`${icons.location} ${msg.labels.queueUrl()}: ${result.queueUrl}`));
+      logger.info(formatters.secondary(`${icons.location} ${msg.labels.queueUrl()} ${result.queueUrl}`));
     }
     
     logger.info(formatters.info(`\n${icons.idea} ${msg.build.viewStatus({ url: formatters.url(jobInfo.url) })}`));
