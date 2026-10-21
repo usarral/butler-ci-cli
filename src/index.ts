@@ -16,6 +16,7 @@ import { setupConfigCommands } from "./commands/config";
 import { setupJobsCommands } from "./commands/jobs";
 import { createDeprecatedAlias } from "./utils/deprecatedCommands";
 import { setupUpdateCheck } from "./utils/updateCheck";
+import { enableDebug, startDebugSession } from "./utils/debug";
 
 
 const program = new Command();
@@ -23,7 +24,14 @@ const program = new Command();
 program
   .name("butler-ci-cli")
   .description("CLI para interactuar con Pipelines Jenkins")
-  .version("3.8.0");
+  .version("3.8.0")
+  .option("--debug", "Print diagnostic output to stderr (HTTP requests and responses, error causes). Also enabled with BUTLER_DEBUG=1")
+  .hook("preAction", (_thisCommand, actionCommand) => {
+    if (program.opts().debug) enableDebug();
+    const path: string[] = [];
+    for (let cmd: Command | null = actionCommand; cmd && cmd.parent; cmd = cmd.parent) path.unshift(cmd.name());
+    startDebugSession(program.version() as string, path.join(" "));
+  });
 
 // Comandos de configuración
 setupConfigCommands(program);
