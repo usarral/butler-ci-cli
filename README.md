@@ -96,6 +96,10 @@ yarn global add butler-ci-cli
 
 When a newer version is published on npm, the CLI prints a notice on stderr after the command finishes. The latest version is checked in the background at most once a day (cached in `~/.butler-ci-cli/update-check.json`), so commands are never slowed down. The notice is skipped when stderr is not a terminal, in CI, and in `butler-ci-cli mcp`. To disable it entirely, set `BUTLER_NO_UPDATE_CHECK=1` (or `NO_UPDATE_NOTIFIER=1`).
 
+### Language
+
+The CLI picks its language from `BUTLER_LANG` (`en` or `es`), then from the system locale (`LC_ALL`, `LC_MESSAGES`, `LANG`), and falls back to English. Messages are being translated progressively; the update notice is the first one available in both languages.
+
 ## ⚙️ Configuration
 
 Butler CI CLI uses a file-based configuration system that allows you to manage multiple Jenkins servers easily. Configurations are stored in your home directory (`~/.butler-ci-cli/configs/`).
