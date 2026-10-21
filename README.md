@@ -96,6 +96,27 @@ yarn global add butler-ci-cli
 
 When a newer version is published on npm, the CLI prints a notice on stderr after the command finishes. The latest version is checked in the background at most once a day (cached in `~/.butler-ci-cli/update-check.json`), so commands are never slowed down. The notice is skipped when stderr is not a terminal, in CI, and in `butler-ci-cli mcp`. To disable it entirely, set `BUTLER_NO_UPDATE_CHECK=1` (or `NO_UPDATE_NOTIFIER=1`).
 
+### Debug mode
+
+When a command fails and you cannot tell whether it is Jenkins, the network or the CLI, run it with `--debug` (anywhere on the command line) or set `BUTLER_DEBUG=1`:
+
+```bash
+butler-ci-cli list-jobs --debug
+BUTLER_DEBUG=1 butler-ci-cli jobs info my-job
+```
+
+It prints, on **stderr** (so `2> debug.log` works and stdout stays clean), the version, the active configuration (the token is never shown, only its length), every HTTP request and response with status and timing, a diagnosis of failures (connection refused, unknown host, TLS, 401/403/404/5xx, an HTML login page instead of JSON) and a final verdict:
+
+```
+[debug] → GET http://127.0.0.1:8099/api/json
+[debug] ✗ ECONNREFUSED: connect ECONNREFUSED 127.0.0.1:8099  (19 ms)
+[debug]   Nothing is listening at that host and port. Is Jenkins running? Is the URL (and port) right?
+[debug] 1 request(s), 1 failed, 0 unexpected answer(s), 1 error(s) reported by the command
+[debug] Verdict: at least one request failed, so the problem is on the Jenkins/network side (see the ✗ lines above).
+```
+
+Request bodies and command arguments are never printed (only the names of form fields). Debug output is in English regardless of the language setting.
+
 ### Language
 
 The CLI picks its language from `BUTLER_LANG` (`en` or `es`), then from the system locale (`LC_ALL`, `LC_MESSAGES`, `LANG`), and falls back to English. All command output, prompts and `--help` descriptions are translated. Not translated: the labels built into Commander's help (`Usage:`, `Options:`), the `--debug` output, and the instructions the MCP server sends to the model.

@@ -257,7 +257,7 @@ export async function downloadLogs(
     const outputPath = await downloadBuildLogs(jobName, buildNumber, options.output);
     
     logger.info(formatters.success(`\n${icons.success} ${msg.success.logsDownloaded()}`));
-    logger.info(formatters.bold(`${icons.file} ${msg.labels.location()}: ${outputPath}`));
+    logger.info(formatters.bold(`${icons.file} ${msg.labels.location()} ${outputPath}`));
     
   } catch (error: any) {
     logger.error(formatters.error(`${icons.error} ${msg.errors.generic()}: ${error.message}`));
