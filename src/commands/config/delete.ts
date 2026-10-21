@@ -9,7 +9,7 @@ export async function deleteConfig(name?: string): Promise<void> {
   const configs = configManager.listConfigs();
   
   if (configs.length === 0) {
-    logger.warn(formatters.warning(`${icons.warning} No hay configuraciones para eliminar`));
+    logger.warn(formatters.warning(`${icons.warning} ${msg.config.delete.nothingToDelete()}`));
     return;
   }
 
@@ -30,7 +30,7 @@ export async function deleteConfig(name?: string): Promise<void> {
 
   // Verificar que la configuración existe
   if (!configToDelete) {
-    logger.error(formatters.error(`${icons.error} No se especificó configuración para eliminar`));
+    logger.error(formatters.error(`${icons.error} ${msg.config.delete.noneSpecified()}`));
     return;
   }
 
@@ -51,7 +51,7 @@ export async function deleteConfig(name?: string): Promise<void> {
   ]);
 
   if (!confirmation.confirm) {
-    logger.info(formatters.secondary("Operación cancelada"));
+    logger.info(formatters.secondary(msg.config.delete.cancelled()));
     return;
   }
 
@@ -63,12 +63,12 @@ export async function deleteConfig(name?: string): Promise<void> {
     // Si era la configuración activa, informar al usuario
     const currentConfig = configManager.getCurrentConfig();
     if (!currentConfig) {
-      logger.warn(formatters.warning(`${icons.warning} No hay configuración activa ahora`));
+      logger.warn(formatters.warning(`${icons.warning} ${msg.config.delete.noActiveNow()}`));
       if (configs.length > 1) { // Había más de una configuración
         logger.info(formatters.secondary(`${icons.info} ${msg.hints.activateConfig()}`));
       }
     }
   } else {
-    logger.error(formatters.error(`${icons.error} Error eliminando la configuración '${configToDelete}'`));
+    logger.error(formatters.error(`${icons.error} ${msg.config.delete.failed({ name: configToDelete })}`));
   }
 }

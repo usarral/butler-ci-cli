@@ -31,7 +31,7 @@ export async function editConfigPreferences(configName?: string) {
       process.exit(1);
     }
     
-    logger.info(formatters.info(`${icons.gear} Editar Preferencias de Configuración\n`));
+    logger.info(formatters.info(`${icons.gear} ${msg.config.edit.title()}\n`));
     
     // Valores actuales
     const currentEditor = config.preferences?.editor || '';

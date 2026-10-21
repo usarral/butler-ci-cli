@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlink
 import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 import { logger } from "./logger";
+import { msg } from "../i18n";
 import { formatters } from "./formatters";
 
 export interface JenkinsConfig {
@@ -79,7 +80,7 @@ class ConfigManagerImpl implements ConfigManager {
       const content = readFileSync(configPath, 'utf8');
       return JSON.parse(content) as JenkinsConfig;
     } catch (error) {
-      logger.error(formatters.error(`Error loading config ${name}: ${error}`));
+      logger.error(formatters.error(msg.config.store.loadFailed({ name, error: String(error) })));
       return null;
     }
   }
@@ -102,7 +103,7 @@ class ConfigManagerImpl implements ConfigManager {
       
       return true;
     } catch (error) {
-      logger.error(formatters.error(`Error deleting config ${name}: ${error}`));
+      logger.error(formatters.error(msg.config.store.deleteFailed({ name, error: String(error) })));
       return false;
     }
   }
@@ -130,7 +131,7 @@ class ConfigManagerImpl implements ConfigManager {
       writeFileSync(this.currentConfigFile, name, 'utf8');
       return true;
     } catch (error) {
-      logger.error(formatters.error(`Error setting current config to ${name}: ${error}`));
+      logger.error(formatters.error(msg.config.store.setCurrentFailed({ name, error: String(error) })));
       return false;
     }
   }
@@ -141,7 +142,7 @@ class ConfigManagerImpl implements ConfigManager {
         unlinkSync(this.currentConfigFile);
       }
     } catch (error) {
-      logger.error(formatters.error(`Error clearing current config: ${error}`));
+      logger.error(formatters.error(msg.config.store.clearCurrentFailed({ error: String(error) })));
     }
   }
 

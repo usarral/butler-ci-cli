@@ -24,6 +24,7 @@ export const es = {
     createConfig: "Usa 'butler-ci-cli config create' para crear una configuración.",
     activateConfig: "Usa 'butler-ci-cli config use <nombre>' para activar una configuración.",
     editConfig: "Usa 'butler-ci-cli config edit <nombre>' o activa una configuración primero.",
+    listConfigs: "Usa 'butler-ci-cli config list' para ver las disponibles",
   },
 
   success: {
@@ -142,5 +143,66 @@ export const es = {
 
   formatting: {
     endOfLogs: "Fin de los logs ({lines} líneas)",
+  },
+
+  config: {
+    command: {
+      description: "Gestionar configuraciones de Jenkins",
+      create: "Crear una nueva configuración de Jenkins",
+      list: "Listar todas las configuraciones",
+      use: "Establecer una configuración como activa",
+      useName: "Nombre de la configuración",
+      delete: "Eliminar una configuración",
+      deleteName: "Nombre de la configuración a eliminar",
+      current: "Mostrar la configuración activa",
+      edit: "Editar preferencias de una configuración (editor, visor de logs, etc.)",
+      editName: "Nombre de la configuración a editar (usa la actual si no se especifica)",
+    },
+    list: {
+      title: "Configuraciones de Jenkins disponibles",
+      none: "No hay configuraciones guardadas",
+      noActive: "No hay ninguna configuración activa",
+      activeBadge: "ACTIVA",
+    },
+    current: {
+      title: "Configuración activa",
+      noActive: "No hay configuración activa",
+      notFound: "Error: configuración activa '{name}' no encontrada",
+      token: "Token: {value}",
+    },
+    use: {
+      nameRequired: "Debes especificar el nombre de la configuración",
+      usage: "Uso: butler-ci-cli config use <nombre>",
+      server: "Servidor: {url}",
+      user: "Usuario: {username}",
+      failed: "Error estableciendo la configuración '{name}' como activa",
+    },
+    create: {
+      title: "Crear nueva configuración de Jenkins",
+      nameRequired: "El nombre es requerido",
+      nameExists: "Ya existe una configuración con ese nombre",
+      urlRequired: "La URL es requerida",
+      urlInvalid: "Por favor ingresa una URL válida",
+      userRequired: "El usuario es requerido",
+      tokenRequired: "El token es requerido",
+      savedAt: "Guardada en: {dir}",
+      failed: "Error creando la configuración: {error}",
+    },
+    delete: {
+      nothingToDelete: "No hay configuraciones para eliminar",
+      noneSpecified: "No se especificó configuración para eliminar",
+      cancelled: "Operación cancelada",
+      noActiveNow: "No hay configuración activa ahora",
+      failed: "Error eliminando la configuración '{name}'",
+    },
+    edit: {
+      title: "Editar Preferencias de Configuración",
+    },
+    store: {
+      loadFailed: "Error cargando la configuración {name}: {error}",
+      deleteFailed: "Error eliminando la configuración {name}: {error}",
+      setCurrentFailed: "Error estableciendo la configuración actual a {name}: {error}",
+      clearCurrentFailed: "Error limpiando la configuración actual: {error}",
+    },
   },
 } as const satisfies Shape<typeof en>;

@@ -5,44 +5,45 @@ import { useConfig } from "./use";
 import { deleteConfig } from "./delete";
 import { showCurrentConfig } from "./current";
 import { editConfigPreferences } from "./edit";
+import { msg } from "../../i18n";
 
 export function setupConfigCommands(program: Command): void {
   const configCommand = program
     .command("config")
-    .description("Gestionar configuraciones de Jenkins");
+    .description(msg.config.command.description());
 
   configCommand
     .command("create")
-    .description("Crear una nueva configuración de Jenkins")
+    .description(msg.config.command.create())
     .action(createConfig);
 
   configCommand
     .command("list")
     .alias("ls")
-    .description("Listar todas las configuraciones")
+    .description(msg.config.command.list())
     .action(listConfigs);
 
   configCommand
     .command("use")
-    .argument("<name>", "Nombre de la configuración")
-    .description("Establecer una configuración como activa")
+    .argument("<name>", msg.config.command.useName())
+    .description(msg.config.command.use())
     .action(useConfig);
 
   configCommand
     .command("delete")
     .alias("rm")
-    .argument("[name]", "Nombre de la configuración a eliminar")
-    .description("Eliminar una configuración")
+    .argument("[name]", msg.config.command.deleteName())
+    .description(msg.config.command.delete())
     .action(deleteConfig);
 
   configCommand
     .command("current")
-    .description("Mostrar la configuración activa")
+    .description(msg.config.command.current())
     .action(showCurrentConfig);
 
   configCommand
     .command("edit")
-    .argument("[name]", "Nombre de la configuración a editar (usa la actual si no se especifica)")
-    .description("Editar preferencias de una configuración (editor, visor de logs, etc.)")
+    .argument("[name]", msg.config.command.editName())
+    .description(msg.config.command.edit())
     .action(editConfigPreferences);
 }
