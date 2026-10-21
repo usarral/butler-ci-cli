@@ -25,7 +25,7 @@ const program = new Command();
 program
   .name("butler-ci-cli")
   .description(msg.cli.description())
-  .version("3.9.0");
+  .version("3.10.0");
 
 program
   .option("--debug", "Print diagnostic output to stderr (HTTP requests and responses, error causes). Also enabled with BUTLER_DEBUG=1")
