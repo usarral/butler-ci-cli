@@ -1,6 +1,8 @@
 import { getBuilds, BuildListOptions } from "../utils/jenkinsFolder";
 import { logger } from "../utils/logger";
-import { msg } from "../utils/messages";
+import { msg } from "../i18n";
+import { icons } from "../utils/icons";
+import { jobStatus } from "../utils/jobStatus";
 import { formatters, printHeader, TableBuilder } from "../utils/formatters";
 
 export interface ListBuildsCommandOptions {
@@ -16,7 +18,7 @@ export interface ListBuildsCommandOptions {
 
 export async function listBuilds(jobName: string, options: ListBuildsCommandOptions = {}) {
   try {
-    logger.info(`${msg.icons.search} Obteniendo lista de builds para ${formatters.jobName(jobName)}...`);
+    logger.info(`${icons.search} Obteniendo lista de builds para ${formatters.jobName(jobName)}...`);
     
     // Preparar opciones de filtrado
     const buildOptions: BuildListOptions = {
@@ -47,12 +49,12 @@ export async function listBuilds(jobName: string, options: ListBuildsCommandOpti
     const builds = await getBuilds(jobName, buildOptions);
     
     if (builds.length === 0) {
-      logger.warn(formatters.warning(`${msg.icons.warning} No se encontraron builds que coincidan con los criterios especificados.`));
+      logger.warn(formatters.warning(`${icons.warning} No se encontraron builds que coincidan con los criterios especificados.`));
       return;
     }
     
     // Mostrar encabezado
-    printHeader(`${msg.icons.construction}  Builds de ${jobName}`);
+    printHeader(`${icons.construction}  Builds de ${jobName}`);
     
     // Mostrar información de filtros aplicados
     displayFilterInfo(options);
@@ -65,7 +67,7 @@ export async function listBuilds(jobName: string, options: ListBuildsCommandOpti
     displaySummary(builds, options);
     
   } catch (error: any) {
-    logger.error(`${msg.icons.error} ${error.message}`);
+    logger.error(`${icons.error} ${error.message}`);
     process.exit(1);
   }
 }
@@ -89,7 +91,7 @@ function displayFilterInfo(options: ListBuildsCommandOptions) {
   if (filters.length > 0) {
     console.log(`\n${formatters.title('Filtros aplicados:')}`);
     filters.forEach(filter => {
-      console.log(`   ${msg.icons.bullet} ${filter}`);
+      console.log(`   ${icons.bullet} ${filter}`);
     });
   }
 }
@@ -113,7 +115,7 @@ function displayBuildsTable(builds: any[]) {
   const durationCol = 'Duración'.padEnd(COL_DURATION_WIDTH);
   
   console.log(formatters.bold(`${numberCol}${statusCol}${dateCol}${durationCol}`));
-  console.log(msg.icons.rule.repeat(62));
+  console.log(icons.rule.repeat(62));
   
   // Filas
   for (const build of builds) {
@@ -138,10 +140,10 @@ function displaySummary(builds: any[], options: ListBuildsCommandOptions) {
   console.log(`\n${formatters.title('Resumen:')}`);
   console.log(`   Total: ${formatters.info(total.toString())}`);
   if (successful > 0) {
-    console.log(`   ${msg.jobStatus.success}: ${successful}`);
+    console.log(`   ${jobStatus.success()}: ${successful}`);
   }
   if (failed > 0) {
-    console.log(`   ${msg.jobStatus.failed}: ${failed}`);
+    console.log(`   ${jobStatus.failed()}: ${failed}`);
   }
   if (running > 0) {
     console.log(`   En ejecución: ${running}`);
@@ -157,15 +159,15 @@ function displaySummary(builds: any[], options: ListBuildsCommandOptions) {
 
 function getBuildStatusDisplay(build: any): string {
   if (build.building) {
-    return formatters.info(`${msg.icons.running} En ejecución`);
+    return formatters.info(`${icons.running} En ejecución`);
   }
   
   const resultMap: Record<string, string> = {
-    'SUCCESS': msg.jobStatus.success,
-    'FAILURE': msg.jobStatus.failed,
-    'UNSTABLE': msg.jobStatus.unstable,
-    'ABORTED': msg.jobStatus.aborted,
-    'NOT_BUILT': `${msg.icons.skipped}  No construido`,
+    'SUCCESS': jobStatus.success(),
+    'FAILURE': jobStatus.failed(),
+    'UNSTABLE': jobStatus.unstable(),
+    'ABORTED': jobStatus.aborted(),
+    'NOT_BUILT': `${icons.skipped}  No construido`,
   };
   
   return resultMap[build.result] || formatters.secondary(build.result || 'Desconocido');

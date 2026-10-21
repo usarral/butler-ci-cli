@@ -1,7 +1,8 @@
 import inquirer from "inquirer";
 import { abortBuild, getBuildInfo } from "../utils/jenkinsFolder";
 import { logger } from "../utils/logger";
-import { msg } from "../utils/messages";
+import { msg } from "../i18n";
+import { icons } from "../utils/icons";
 import { formatters } from "../utils/formatters";
 
 /**
@@ -19,7 +20,10 @@ export async function abort(
     );
 
     if (!build.building) {
-      logger.warn(`${msg.icons.warning}  ${msg.warnings.buildNotRunning(build.number, build.result)}`);
+      const finished = build.result
+        ? msg.warnings.buildNotRunningWithResult({ build: build.number, result: build.result })
+        : msg.warnings.buildNotRunning({ build: build.number });
+      logger.warn(`${icons.warning}  ${finished}`);
       return;
     }
 
@@ -28,21 +32,21 @@ export async function abort(
         {
           type: 'confirm',
           name: 'confirm',
-          message: msg.prompts.confirmAbort(build.number, jobName),
+          message: msg.prompts.confirmAbort({ build: build.number, job: jobName }),
           default: false,
         },
       ]);
 
       if (!confirm) {
-        logger.warn(`\n${msg.icons.aborted} ${msg.warnings.abortCancelled}`);
+        logger.warn(`\n${icons.aborted} ${msg.warnings.abortCancelled()}`);
         return;
       }
     }
 
     const result = await abortBuild(jobName, build.number);
-    logger.info(formatters.success(`${msg.icons.success} ${result.message}`));
+    logger.info(formatters.success(`${icons.success} ${result.message}`));
   } catch (error: any) {
-    logger.error(`${msg.icons.error} ${error.message}`);
+    logger.error(`${icons.error} ${error.message}`);
     process.exit(1);
   }
 }

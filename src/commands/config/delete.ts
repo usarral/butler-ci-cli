@@ -1,14 +1,15 @@
 import inquirer from "inquirer";
 import { configManager } from "../../utils/config";
 import { logger } from "../../utils/logger";
-import { messages as msg } from "../../utils/messages";
+import { msg } from "../../i18n";
+import { icons } from "../../utils/icons";
 import { formatters } from "../../utils/formatters";
 
 export async function deleteConfig(name?: string): Promise<void> {
   const configs = configManager.listConfigs();
   
   if (configs.length === 0) {
-    logger.warn(formatters.warning(`${msg.icons.warning} No hay configuraciones para eliminar`));
+    logger.warn(formatters.warning(`${icons.warning} No hay configuraciones para eliminar`));
     return;
   }
 
@@ -20,7 +21,7 @@ export async function deleteConfig(name?: string): Promise<void> {
       {
         type: "list",
         name: "config",
-        message: msg.prompts.selectConfigToDelete,
+        message: msg.prompts.selectConfigToDelete(),
         choices: configs,
       },
     ]);
@@ -29,13 +30,13 @@ export async function deleteConfig(name?: string): Promise<void> {
 
   // Verificar que la configuración existe
   if (!configToDelete) {
-    logger.error(formatters.error(`${msg.icons.error} No se especificó configuración para eliminar`));
+    logger.error(formatters.error(`${icons.error} No se especificó configuración para eliminar`));
     return;
   }
 
   const config = configManager.loadConfig(configToDelete);
   if (!config) {
-    logger.error(formatters.error(`${msg.icons.error} ${msg.errors.configNotFound(configToDelete)}`));
+    logger.error(formatters.error(`${icons.error} ${msg.errors.configNotFound({ name: configToDelete })}`));
     return;
   }
 
@@ -44,7 +45,7 @@ export async function deleteConfig(name?: string): Promise<void> {
     {
       type: "confirm",
       name: "confirm",
-      message: msg.prompts.confirmDelete(configToDelete),
+      message: msg.prompts.confirmDelete({ name: configToDelete }),
       default: false,
     },
   ]);
@@ -57,17 +58,17 @@ export async function deleteConfig(name?: string): Promise<void> {
   const success = configManager.deleteConfig(configToDelete);
   
   if (success) {
-    logger.info(formatters.success(`${msg.icons.success} ${msg.success.configDeleted(configToDelete)}`));
+    logger.info(formatters.success(`${icons.success} ${msg.success.configDeleted({ name: configToDelete })}`));
     
     // Si era la configuración activa, informar al usuario
     const currentConfig = configManager.getCurrentConfig();
     if (!currentConfig) {
-      logger.warn(formatters.warning(`${msg.icons.warning} No hay configuración activa ahora`));
+      logger.warn(formatters.warning(`${icons.warning} No hay configuración activa ahora`));
       if (configs.length > 1) { // Había más de una configuración
-        logger.info(formatters.secondary(`${msg.icons.info} ${msg.hints.activateConfig}`));
+        logger.info(formatters.secondary(`${icons.info} ${msg.hints.activateConfig()}`));
       }
     }
   } else {
-    logger.error(formatters.error(`${msg.icons.error} Error eliminando la configuración '${configToDelete}'`));
+    logger.error(formatters.error(`${icons.error} Error eliminando la configuración '${configToDelete}'`));
   }
 }

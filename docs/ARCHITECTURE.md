@@ -132,7 +132,12 @@ Examples of implemented commands:
 - `jenkinsFolder.ts` — helpers for folder path construction and traversal
 - `storage.ts` — local persistence helpers (read/write `data/jobs.json`)
 - `formatters.ts` — functions to format dates, durations, and statuses
-- `messages.ts` — consistent user-facing messages and icons
+- `jobStatus.ts` — translated job/build status labels prefixed with their icon
+- `icons.ts` — emoji/ASCII icon sets
+
+## Internationalization
+
+User-facing text lives in `src/i18n/en.ts` (source of truth) and `src/i18n/es.ts`, and is used as typed properties: `msg.group.name()` or `msg.group.name({ var })`. The variables of each message come from its `{placeholders}`, and the compiler rejects a translation whose keys or placeholders differ from English. The language is chosen from `BUTLER_LANG`, then the system locale, defaulting to English. To add a message, add it to both catalogs and call it through `msg`; keep icons out of the text and compose them at the call site.
 
 ## Extending the client
 

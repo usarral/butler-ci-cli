@@ -1,17 +1,18 @@
 import { configManager } from "../../utils/config";
 import { logger } from "../../utils/logger";
-import { messages as msg } from "../../utils/messages";
+import { msg } from "../../i18n";
+import { icons } from "../../utils/icons";
 import { formatters } from "../../utils/formatters";
 
 export async function listConfigs(): Promise<void> {
-  logger.info(formatters.info(`${msg.icons.list} Configuraciones de Jenkins disponibles\n`));
+  logger.info(formatters.info(`${icons.list} Configuraciones de Jenkins disponibles\n`));
 
   const configs = configManager.listConfigs();
   const currentConfig = configManager.getCurrentConfig();
 
   if (configs.length === 0) {
-    logger.warn(formatters.warning(`${msg.icons.warning} No hay configuraciones guardadas`));
-    logger.info(formatters.secondary(`${msg.icons.info} ${msg.hints.createConfig}`));
+    logger.warn(formatters.warning(`${icons.warning} No hay configuraciones guardadas`));
+    logger.info(formatters.secondary(`${icons.info} ${msg.hints.createConfig()}`));
     return;
   }
 
@@ -20,21 +21,21 @@ export async function listConfigs(): Promise<void> {
     const isActive = configName === currentConfig;
     
     if (config) {
-      const status = isActive ? formatters.success(`${msg.icons.dotActive} ACTIVA`) : formatters.secondary(msg.icons.dotInactive);
+      const status = isActive ? formatters.success(`${icons.dotActive} ACTIVA`) : formatters.secondary(icons.dotInactive);
       logger.info(`${status} ${formatters.highlight(configName)}`);
-      logger.info(`   ${msg.icons.location} ${config.url}`);
-      logger.info(`   ${msg.icons.user} ${config.username}`);
+      logger.info(`   ${icons.location} ${config.url}`);
+      logger.info(`   ${icons.user} ${config.username}`);
       if (config.description) {
-        logger.info(`   ${msg.icons.description} ${config.description}`);
+        logger.info(`   ${icons.description} ${config.description}`);
       }
       logger.info('');
     }
   }
 
   if (!currentConfig) {
-    logger.warn(formatters.warning(`${msg.icons.warning} No hay ninguna configuración activa`));
-    logger.info(formatters.secondary(`${msg.icons.info} ${msg.hints.activateConfig}`));
+    logger.warn(formatters.warning(`${icons.warning} No hay ninguna configuración activa`));
+    logger.info(formatters.secondary(`${icons.info} ${msg.hints.activateConfig()}`));
   }
 
-  logger.info(formatters.secondary(`${msg.icons.folder} Ubicación: ${configManager.getConfigDir()}`));
+  logger.info(formatters.secondary(`${icons.folder} Ubicación: ${configManager.getConfigDir()}`));
 }

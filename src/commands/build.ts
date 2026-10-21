@@ -1,18 +1,19 @@
 import { getJobParameters, buildJob, getJobInfo } from "../utils/jenkinsFolder";
 import { logger } from "../utils/logger";
-import { msg } from "../utils/messages";
+import { msg } from "../i18n";
+import { icons } from "../utils/icons";
 import { formatters } from "../utils/formatters";
 import inquirer from "inquirer";
 
 export async function build(jobName: string, options: { params?: string }) {
   try {
-    logger.info(`${msg.icons.building} ${msg.info.preparingBuild(formatters.jobName(jobName))}\n`);
+    logger.info(`${icons.building} ${msg.info.preparingBuild({ job: formatters.jobName(jobName) })}\n`);
     
     // Verificar que el job existe y es ejecutable
     const jobInfo = await getJobInfo(jobName);
     
     if (!jobInfo.buildable) {
-      logger.error(msg.errors.jobNotExecutable(jobName));
+      logger.error(msg.errors.jobNotExecutable({ job: jobName }));
       process.exit(1);
     }
     
@@ -22,18 +23,18 @@ export async function build(jobName: string, options: { params?: string }) {
     let buildParams: { [key: string]: any } = {};
     
     if (parameters.length > 0) {
-      logger.info(formatters.info(`${msg.icons.logs} Este job requiere parámetros:\n`));
+      logger.info(formatters.info(`${icons.logs} Este job requiere parámetros:\n`));
       
       // Si se pasaron parámetros por CLI
       if (options.params) {
         buildParams = parseCliParams(options.params);
-        logger.info(formatters.success(`${msg.icons.check} ${msg.info.usingCliParams}\n`));
+        logger.info(formatters.success(`${icons.check} ${msg.info.usingCliParams()}\n`));
       } else {
         // Modo interactivo: preguntar por cada parámetro
         buildParams = await promptForParameters(parameters);
       }
     } else {
-      logger.info(formatters.secondary(`${msg.icons.info}  Este job no requiere parámetros.\n`));
+      logger.info(formatters.secondary(`${icons.info}  Este job no requiere parámetros.\n`));
     }
     
     // Confirmar antes de ejecutar
@@ -41,30 +42,30 @@ export async function build(jobName: string, options: { params?: string }) {
       {
         type: 'confirm',
         name: 'confirm',
-        message: msg.prompts.confirmBuild,
+        message: msg.prompts.confirmBuild(),
         default: true,
       },
     ]);
     
     if (!confirm) {
-      logger.warn(`\n${msg.icons.aborted} ${msg.warnings.buildCancelled}`);
+      logger.warn(`\n${icons.aborted} ${msg.warnings.buildCancelled()}`);
       return;
     }
     
     // Ejecutar el build
-    logger.info(formatters.info(`\n${msg.icons.rocket} Iniciando build...\n`));
+    logger.info(formatters.info(`\n${icons.rocket} Iniciando build...\n`));
     const result = await buildJob(jobName, buildParams);
     
-    logger.info(formatters.success(`${msg.icons.success} ${result.message}`));
+    logger.info(formatters.success(`${icons.success} ${result.message}`));
     
     if (result.queueUrl) {
-      logger.info(formatters.secondary(`${msg.icons.location} ${msg.labels.queueUrl}: ${result.queueUrl}`));
+      logger.info(formatters.secondary(`${icons.location} ${msg.labels.queueUrl()}: ${result.queueUrl}`));
     }
     
-    logger.info(formatters.info(`\n${msg.icons.idea} Puedes ver el estado del build en: ${formatters.url(jobInfo.url)}`));
+    logger.info(formatters.info(`\n${icons.idea} Puedes ver el estado del build en: ${formatters.url(jobInfo.url)}`));
     
   } catch (error: any) {
-    logger.error(`${msg.icons.error} ${error.message}`);
+    logger.error(`${icons.error} ${error.message}`);
     process.exit(1);
   }
 }
