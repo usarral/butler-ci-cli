@@ -23,7 +23,7 @@ export async function build(jobName: string, options: { params?: string }) {
     let buildParams: { [key: string]: any } = {};
     
     if (parameters.length > 0) {
-      logger.info(formatters.info(`${icons.logs} Este job requiere parámetros:\n`));
+      logger.info(formatters.info(`${icons.logs} ${msg.build.requiresParams()}\n`));
       
       // Si se pasaron parámetros por CLI
       if (options.params) {
@@ -34,7 +34,7 @@ export async function build(jobName: string, options: { params?: string }) {
         buildParams = await promptForParameters(parameters);
       }
     } else {
-      logger.info(formatters.secondary(`${icons.info}  Este job no requiere parámetros.\n`));
+      logger.info(formatters.secondary(`${icons.info}  ${msg.build.noParams()}\n`));
     }
     
     // Confirmar antes de ejecutar
@@ -53,7 +53,7 @@ export async function build(jobName: string, options: { params?: string }) {
     }
     
     // Ejecutar el build
-    logger.info(formatters.info(`\n${icons.rocket} Iniciando build...\n`));
+    logger.info(formatters.info(`\n${icons.rocket} ${msg.build.starting()}\n`));
     const result = await buildJob(jobName, buildParams);
     
     logger.info(formatters.success(`${icons.success} ${result.message}`));
@@ -62,7 +62,7 @@ export async function build(jobName: string, options: { params?: string }) {
       logger.info(formatters.secondary(`${icons.location} ${msg.labels.queueUrl()}: ${result.queueUrl}`));
     }
     
-    logger.info(formatters.info(`\n${icons.idea} Puedes ver el estado del build en: ${formatters.url(jobInfo.url)}`));
+    logger.info(formatters.info(`\n${icons.idea} ${msg.build.viewStatus({ url: formatters.url(jobInfo.url) })}`));
     
   } catch (error: any) {
     logger.error(`${icons.error} ${error.message}`);

@@ -25,7 +25,7 @@ async function validateAndGetBuildData(jobName: string) {
   const jobData = await getJobInfo(jobName);
   
   if (!jobData.buildable) {
-    throw new Error(`El job "${jobName}" no es ejecutable (puede ser una carpeta o estar deshabilitado).`);
+    throw new Error(msg.errors.jobNotExecutableHint({ job: jobName }));
   }
   
   if (!jobData.lastBuild) {
@@ -40,7 +40,7 @@ function displayBuildHeader(jobData: any, buildData: any, jobName: string) {
   printHeader(`${icons.construction}  ${msg.labels.buildInfo()}`);
   
   const table = new TableBuilder()
-    .add('Job:', jobData.fullName || jobName)
+    .add(msg.labels.job(), jobData.fullName || jobName)
     .add(msg.labels.buildNumber(), formatters.buildNumber(buildData.number))
     .add(msg.labels.url(), formatters.url(buildData.url));
   
@@ -48,7 +48,7 @@ function displayBuildHeader(jobData: any, buildData: any, jobName: string) {
   if (result) {
     table.add(msg.labels.result(), getBuildResultDisplay(result));
   } else {
-    table.add(msg.labels.status(), formatters.info(`${icons.running} En ejecución`));
+    table.add(msg.labels.status(), formatters.info(jobStatus.running()));
   }
   
   console.log(table.build());
@@ -71,7 +71,7 @@ function displayBuildTiming(buildData: any) {
   
   if (!buildData.result && buildData.estimatedDuration) {
     const estimatedMinutes = Math.floor(buildData.estimatedDuration / 60000);
-    table.add('Duración estimada:', `~${estimatedMinutes}m`);
+    table.add(msg.labels.estimatedDuration(), `~${estimatedMinutes}m`);
   }
   
   if (table['rows'].length > 0) {

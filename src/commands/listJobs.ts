@@ -6,12 +6,12 @@ import { formatters } from "../utils/formatters";
 
 export async function listJobs(options?: { showFolders?: boolean; maxLevel?: number }) {
   try {
-    logger.info(`${icons.search} Obteniendo estructura de Jenkins...`);
+    logger.info(`${icons.search} ${msg.list.fetching()}`);
     
     const items = await getAllJobsRecursive();
     
     if (items.length === 0) {
-      logger.warn(formatters.warning(`${icons.warning} No se encontraron jobs o carpetas.`));
+      logger.warn(formatters.warning(`${icons.warning} ${msg.list.none()}`));
       return;
     }
     
@@ -25,7 +25,7 @@ export async function listJobs(options?: { showFolders?: boolean; maxLevel?: num
       ? filteredItems.filter(item => item.type === 'job')
       : filteredItems;
     
-    logger.info(`\n${icons.list} Estructura de Jenkins:`);
+    logger.info(`\n${icons.list} ${msg.list.structure()}`);
     logger.info("========================");
     
     for (const item of displayItems) {
@@ -43,10 +43,10 @@ export async function listJobs(options?: { showFolders?: boolean; maxLevel?: num
     const totalJobs = displayItems.filter(item => item.type === 'job').length;
     const totalFolders = displayItems.filter(item => item.type === 'folder').length;
     
-    logger.info(`\n${icons.list} Resumen:`);
-    logger.info(`   Jobs: ${formatters.success(totalJobs.toString())}`);
+    logger.info(`\n${icons.list} ${msg.labels.summary()}`);
+    logger.info(`   ${msg.list.jobs({ count: formatters.success(totalJobs.toString()) })}`);
     if (options?.showFolders !== false) {
-      logger.info(`   Carpetas: ${formatters.info(totalFolders.toString())}`);
+      logger.info(`   ${msg.list.folders({ count: formatters.info(totalFolders.toString()) })}`);
     }
     
   } catch (error: any) {

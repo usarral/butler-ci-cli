@@ -7,13 +7,13 @@ import { formatters, printHeader, TableBuilder } from "../utils/formatters";
 
 export async function jobSteps(jobName: string, buildNumber: string) {
   try {
-    logger.info(`${icons.search} Obteniendo pasos del build ${formatters.buildNumber(buildNumber)} del job ${formatters.jobName(jobName)}`);
+    logger.info(`${icons.search} ${msg.steps.fetching({ build: formatters.buildNumber(buildNumber), job: formatters.jobName(jobName) })}`);
     
     // Validar que el job existe y es ejecutable
     const jobData = await getJobInfo(jobName);
     
     if (!jobData.buildable) {
-      throw new Error(`El job "${jobName}" no es ejecutable (puede ser una carpeta o estar deshabilitado).`);
+      throw new Error(msg.errors.jobNotExecutableHint({ job: jobName }));
     }
     
     // Resolver "latest" al último build number si es necesario
@@ -23,24 +23,24 @@ export async function jobSteps(jobName: string, buildNumber: string) {
         throw new Error(msg.errors.noBuildHistory());
       }
       actualBuildNumber = String(jobData.lastBuild.number);
-      logger.info(`${icons.info} Último build: #${actualBuildNumber}`);
+      logger.info(`${icons.info} ${msg.steps.latest({ build: actualBuildNumber })}`);
     }
     
     // Obtener los pasos del workflow
     const stages = await getWorkflowSteps(jobName, actualBuildNumber);
     
     if (!stages || stages.length === 0) {
-      logger.info(`${icons.info} No se encontraron pasos para el build #${actualBuildNumber}`);
+      logger.info(`${icons.info} ${msg.steps.none({ build: actualBuildNumber })}`);
       return;
     }
     
     // Mostrar información del job y build
-    printHeader(`${icons.file} Pasos del Build`);
+    printHeader(`${icons.file} ${msg.steps.title()}`);
     
     const headerTable = new TableBuilder()
-      .add('Job:', jobData.fullName || jobName)
-      .add('Build:', formatters.buildNumber(actualBuildNumber))
-      .add('URL:', formatters.url(`${jobData.url}${actualBuildNumber}/`));
+      .add(msg.labels.job(), jobData.fullName || jobName)
+      .add(msg.labels.build(), formatters.buildNumber(actualBuildNumber))
+      .add(msg.labels.url(), formatters.url(`${jobData.url}${actualBuildNumber}/`));
     
     console.log(headerTable.build());
     
@@ -56,24 +56,24 @@ export async function jobSteps(jobName: string, buildNumber: string) {
 }
 
 function displayStage(stage: WorkflowStage, stageNumber: number) {
-  console.log(`\n${formatters.title(`Stage ${stageNumber}: ${stage.name}`)}`);
+  console.log(`\n${formatters.title(msg.steps.stage({ number: stageNumber, name: stage.name }))}`);
   
   const table = new TableBuilder()
-    .add('Estado:', getStatusDisplay(stage.status));
+    .add(msg.labels.status(), getStatusDisplay(stage.status));
   
   if (stage.startTimeMillis) {
-    table.add('Inicio:', formatters.date(stage.startTimeMillis));
+    table.add(msg.labels.start(), formatters.date(stage.startTimeMillis));
   }
   
   if (stage.durationMillis) {
-    table.add('Duración:', formatters.duration(stage.durationMillis));
+    table.add(msg.labels.duration(), formatters.duration(stage.durationMillis));
   }
   
   console.log(table.build());
   
   // Mostrar steps si existen
   if (stage.stageFlowNodes && stage.stageFlowNodes.length > 0) {
-    console.log(`\n  ${formatters.secondary('Pasos:')}`);
+    console.log(`\n  ${formatters.secondary(msg.steps.steps())}`);
     stage.stageFlowNodes.forEach((step, index) => {
       displayStep(step, index + 1);
     });
@@ -87,7 +87,7 @@ function displayStep(step: any, stepNumber: number) {
   console.log(`    ${stepNumber}. ${step.name} - ${status}${duration}`);
   
   if (step.error) {
-    console.log(`       ${formatters.error(`${icons.error} Error: ${step.error.message}`)}`);
+    console.log(`       ${formatters.error(`${icons.error} ${msg.steps.error({ message: step.error.message })}`)}`);
   }
 }
 
@@ -98,9 +98,9 @@ function getStatusDisplay(status: string): string {
     'FAILURE': jobStatus.failed(),
     'UNSTABLE': jobStatus.unstable(),
     'ABORTED': jobStatus.aborted(),
-    'IN_PROGRESS': formatters.info(`${icons.running} En progreso`),
-    'NOT_EXECUTED': formatters.secondary(`${icons.skipped} No ejecutado`),
-    'PAUSED_PENDING_INPUT': formatters.warning(`${icons.paused} Esperando entrada`),
+    'IN_PROGRESS': formatters.info(`${icons.running} ${msg.steps.inProgress()}`),
+    'NOT_EXECUTED': formatters.secondary(`${icons.skipped} ${msg.steps.notExecuted()}`),
+    'PAUSED_PENDING_INPUT': formatters.warning(`${icons.paused} ${msg.steps.paused()}`),
   };
   
   return statusMap[status] || formatters.secondary(status);

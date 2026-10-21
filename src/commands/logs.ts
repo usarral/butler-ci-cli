@@ -55,7 +55,7 @@ export async function showLogs(
     // Si se solicita descarga
     if (options.download || options.editor) {
       const outputPath = await downloadBuildLogs(jobName, resolvedBuildNumber, options.output);
-      logger.info(formatters.success(`${icons.success} Logs descargados en: ${formatters.highlight(outputPath)}\n`));
+      logger.info(formatters.success(`${icons.success} ${msg.logs.downloadedTo({ path: formatters.highlight(outputPath) })}\n`));
       
       // Si se solicita abrir en editor
       if (options.editor) {
@@ -101,7 +101,7 @@ async function streamLogs(
   // Manejar Ctrl+C para salir limpiamente
   const sigintHandler = () => {
     console.log('\n');
-    logger.info(formatters.info(`${icons.info} Streaming detenido por el usuario`));
+    logger.info(formatters.info(`${icons.info} ${msg.logs.streamStopped()}`));
     process.exit(0);
   };
   
@@ -110,8 +110,8 @@ async function streamLogs(
   
   // Mostrar encabezado
   printSeparator();
-  console.log(formatters.title(`${icons.file} ${msg.labels.buildLogs({ build: Number(buildNumber) })} - Streaming Mode`));
-  console.log(formatters.dim(`Actualizando cada ${intervalSeconds} segundos. Presiona Ctrl+C para salir.`));
+  console.log(formatters.title(`${icons.file} ${msg.labels.buildLogs({ build: Number(buildNumber) })} - ${msg.logs.streamingMode()}`));
+  console.log(formatters.dim(msg.logs.refreshing({ seconds: intervalSeconds })));
   printSeparator();
   console.log();
   
@@ -145,7 +145,7 @@ async function streamLogs(
                              buildInfo.result === 'FAILURE' ? formatters.error : 
                              formatters.info;
           
-          console.log(statusColor(`${statusIcon} Build completado con estado: ${buildInfo.result}`));
+          console.log(statusColor(`${statusIcon} ${msg.logs.completed({ result: String(buildInfo.result) })}`));
           printSeparator();
           break;
         }
@@ -155,7 +155,7 @@ async function streamLogs(
         if (currentStatus !== lastStatus) {
           if (lastStatus !== '') {
             console.log();
-            console.log(formatters.dim(`Estado: ${currentStatus}`));
+            console.log(formatters.dim(msg.logs.status({ status: currentStatus })));
           }
           lastStatus = currentStatus;
         }
@@ -164,7 +164,7 @@ async function streamLogs(
         await new Promise(resolve => setTimeout(resolve, intervalSeconds * 1000));
         
       } catch (error: any) {
-        logger.error(`${icons.error} Error en streaming: ${error.message}`);
+        logger.error(`${icons.error} ${msg.logs.streamError({ message: error.message })}`);
         isRunning = false;
       }
     }

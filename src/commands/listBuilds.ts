@@ -18,7 +18,7 @@ export interface ListBuildsCommandOptions {
 
 export async function listBuilds(jobName: string, options: ListBuildsCommandOptions = {}) {
   try {
-    logger.info(`${icons.search} Obteniendo lista de builds para ${formatters.jobName(jobName)}...`);
+    logger.info(`${icons.search} ${msg.builds.fetching({ job: formatters.jobName(jobName) })}`);
     
     // Preparar opciones de filtrado
     const buildOptions: BuildListOptions = {
@@ -34,14 +34,14 @@ export async function listBuilds(jobName: string, options: ListBuildsCommandOpti
     if (options.since) {
       buildOptions.startDate = new Date(options.since);
       if (isNaN(buildOptions.startDate.getTime())) {
-        throw new Error(`Fecha de inicio inválida: ${options.since}`);
+        throw new Error(msg.builds.invalidSince({ value: options.since }));
       }
     }
     
     if (options.until) {
       buildOptions.endDate = new Date(options.until);
       if (isNaN(buildOptions.endDate.getTime())) {
-        throw new Error(`Fecha de fin inválida: ${options.until}`);
+        throw new Error(msg.builds.invalidUntil({ value: options.until }));
       }
     }
     
@@ -49,12 +49,12 @@ export async function listBuilds(jobName: string, options: ListBuildsCommandOpti
     const builds = await getBuilds(jobName, buildOptions);
     
     if (builds.length === 0) {
-      logger.warn(formatters.warning(`${icons.warning} No se encontraron builds que coincidan con los criterios especificados.`));
+      logger.warn(formatters.warning(`${icons.warning} ${msg.builds.none()}`));
       return;
     }
     
     // Mostrar encabezado
-    printHeader(`${icons.construction}  Builds de ${jobName}`);
+    printHeader(`${icons.construction}  ${msg.builds.title({ job: jobName })}`);
     
     // Mostrar información de filtros aplicados
     displayFilterInfo(options);
@@ -76,20 +76,20 @@ function displayFilterInfo(options: ListBuildsCommandOptions) {
   const filters: string[] = [];
   
   if (options.status) {
-    filters.push(`Estado: ${formatters.info(options.status)}`);
+    filters.push(msg.builds.filterStatus({ value: formatters.info(options.status) }));
   }
   if (options.branch) {
-    filters.push(`Rama: ${formatters.info(options.branch)}`);
+    filters.push(msg.builds.filterBranch({ value: formatters.info(options.branch) }));
   }
   if (options.since) {
-    filters.push(`Desde: ${formatters.secondary(options.since)}`);
+    filters.push(msg.builds.filterSince({ value: formatters.secondary(options.since) }));
   }
   if (options.until) {
-    filters.push(`Hasta: ${formatters.secondary(options.until)}`);
+    filters.push(msg.builds.filterUntil({ value: formatters.secondary(options.until) }));
   }
   
   if (filters.length > 0) {
-    console.log(`\n${formatters.title('Filtros aplicados:')}`);
+    console.log(`\n${formatters.title(msg.builds.filters())}`);
     filters.forEach(filter => {
       console.log(`   ${icons.bullet} ${filter}`);
     });
@@ -97,7 +97,7 @@ function displayFilterInfo(options: ListBuildsCommandOptions) {
 }
 
 function displayBuildsTable(builds: any[]) {
-  console.log(formatters.title('Lista de builds:'));
+  console.log(formatters.title(msg.builds.list()));
   console.log('');
   
   // Column widths
@@ -109,10 +109,10 @@ function displayBuildsTable(builds: any[]) {
   const ANSI_CODE_LENGTH = 9;
   
   // Encabezados
-  const numberCol = 'Build #'.padEnd(COL_NUMBER_WIDTH);
-  const statusCol = 'Estado'.padEnd(COL_STATUS_WIDTH);
-  const dateCol = 'Fecha'.padEnd(COL_DATE_WIDTH);
-  const durationCol = 'Duración'.padEnd(COL_DURATION_WIDTH);
+  const numberCol = msg.builds.colNumber().padEnd(COL_NUMBER_WIDTH);
+  const statusCol = msg.builds.colStatus().padEnd(COL_STATUS_WIDTH);
+  const dateCol = msg.builds.colDate().padEnd(COL_DATE_WIDTH);
+  const durationCol = msg.builds.colDuration().padEnd(COL_DURATION_WIDTH);
   
   console.log(formatters.bold(`${numberCol}${statusCol}${dateCol}${durationCol}`));
   console.log(icons.rule.repeat(62));
@@ -124,7 +124,7 @@ function displayBuildsTable(builds: any[]) {
     const date = formatters.date(build.timestamp).padEnd(COL_DATE_WIDTH + ANSI_CODE_LENGTH);
     const duration = build.duration > 0 
       ? formatters.duration(build.duration).padEnd(COL_DURATION_WIDTH + ANSI_CODE_LENGTH)
-      : formatters.secondary('En curso').padEnd(COL_DURATION_WIDTH + ANSI_CODE_LENGTH);
+      : formatters.secondary(msg.builds.inProgress()).padEnd(COL_DURATION_WIDTH + ANSI_CODE_LENGTH);
     
     console.log(`${number}${status}${date}${duration}`);
   }
@@ -137,8 +137,8 @@ function displaySummary(builds: any[], options: ListBuildsCommandOptions) {
   const running = builds.filter(b => b.building).length;
   const other = total - successful - failed - running;
   
-  console.log(`\n${formatters.title('Resumen:')}`);
-  console.log(`   Total: ${formatters.info(total.toString())}`);
+  console.log(`\n${formatters.title(msg.labels.summary())}`);
+  console.log(`   ${msg.builds.total({ count: formatters.info(total.toString()) })}`);
   if (successful > 0) {
     console.log(`   ${jobStatus.success()}: ${successful}`);
   }
@@ -146,20 +146,20 @@ function displaySummary(builds: any[], options: ListBuildsCommandOptions) {
     console.log(`   ${jobStatus.failed()}: ${failed}`);
   }
   if (running > 0) {
-    console.log(`   En ejecución: ${running}`);
+    console.log(`   ${msg.jobStatus.running()}: ${running}`);
   }
   if (other > 0) {
-    console.log(`   Otros: ${other}`);
+    console.log(`   ${msg.builds.other({ count: other })}`);
   }
   
   const limit = options.limit || 50;
   const offset = options.offset || 0;
-  console.log(`\n   ${formatters.secondary(`Mostrando ${total} builds (offset: ${offset}, límite: ${limit})`)}`);
+  console.log(`\n   ${formatters.secondary(msg.builds.showing({ total, offset, limit }))}`);
 }
 
 function getBuildStatusDisplay(build: any): string {
   if (build.building) {
-    return formatters.info(`${icons.running} En ejecución`);
+    return formatters.info(jobStatus.running());
   }
   
   const resultMap: Record<string, string> = {
@@ -167,8 +167,8 @@ function getBuildStatusDisplay(build: any): string {
     'FAILURE': jobStatus.failed(),
     'UNSTABLE': jobStatus.unstable(),
     'ABORTED': jobStatus.aborted(),
-    'NOT_BUILT': `${icons.skipped}  No construido`,
+    'NOT_BUILT': `${icons.skipped}  ${msg.builds.notBuilt()}`,
   };
   
-  return resultMap[build.result] || formatters.secondary(build.result || 'Desconocido');
+  return resultMap[build.result] || formatters.secondary(build.result || msg.builds.unknown());
 }

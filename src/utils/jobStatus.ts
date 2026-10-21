@@ -8,6 +8,7 @@ export const jobStatus = {
   unstable: () => `${icons.warning} ${msg.jobStatus.unstable()}`,
   disabled: () => `${icons.disabled} ${msg.jobStatus.disabled()}`,
   aborted: () => `${icons.aborted} ${msg.jobStatus.aborted()}`,
+  running: () => `${icons.running} ${msg.jobStatus.running()}`,
   runningSuccess: () => `${icons.running} ${msg.jobStatus.runningSuccess()}`,
   runningFailed: () => `${icons.running} ${msg.jobStatus.runningFailed()}`,
   runningUnstable: () => `${icons.running} ${msg.jobStatus.runningUnstable()}`,
