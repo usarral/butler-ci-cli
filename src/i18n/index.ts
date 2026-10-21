@@ -1,29 +1,15 @@
-import { en, type MessageKey } from "./en";
+import { en } from "./en";
 import { es } from "./es";
+import type { Messages, PlaceholderMismatch } from "./types";
 
 export type Locale = "en" | "es";
-export type { MessageKey };
 
-const catalogs: Record<Locale, Record<MessageKey, string>> = { en, es };
-
-/** Names of the `{placeholders}` found in a message template. */
-type Placeholders<S extends string> = S extends `${string}{${infer Name}}${infer Rest}`
-  ? Name | Placeholders<Rest>
-  : never;
-
-type VarsArgs<K extends MessageKey> = [Placeholders<(typeof en)[K]>] extends [never]
-  ? []
-  : [vars: Record<Placeholders<(typeof en)[K]>, string | number>];
+const catalogs = { en, es };
 
 // Fails to compile if a translation uses different placeholders than the English message.
-type PlaceholderMismatch = {
-  [K in MessageKey]: [Placeholders<(typeof es)[K]>] extends [Placeholders<(typeof en)[K]>]
-    ? [Placeholders<(typeof en)[K]>] extends [Placeholders<(typeof es)[K]>]
-      ? never
-      : K
-    : K;
-}[MessageKey];
-export const placeholdersMatch: [PlaceholderMismatch] extends [never] ? true : { mismatch: PlaceholderMismatch } = true;
+export const placeholdersMatch: [PlaceholderMismatch<typeof en, typeof es>] extends [never]
+  ? true
+  : { mismatch: PlaceholderMismatch<typeof en, typeof es> } = true;
 
 function toLocale(value: string | undefined): Locale | null {
   if (!value) return null;
@@ -55,8 +41,33 @@ export function setLocale(locale: Locale | null): void {
   current = locale;
 }
 
-export function t<K extends MessageKey>(key: K, ...args: VarsArgs<K>): string {
-  const vars: Record<string, string | number> = args[0] ?? {};
-  const template = catalogs[getLocale()][key] ?? en[key];
+type Node = { readonly [key: string]: string | Node };
+
+function lookup(root: Node, path: string[]): string | undefined {
+  let node: string | Node | undefined = root;
+  for (const key of path) {
+    if (typeof node !== "object") return undefined;
+    node = node[key];
+  }
+  return typeof node === "string" ? node : undefined;
+}
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? String(vars[name]) : match));
 }
+
+function build(node: Node, path: string[] = []): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(node)) {
+    const here = [...path, key];
+    out[key] =
+      typeof value === "string"
+        ? (vars: Record<string, string | number> = {}) =>
+            interpolate(lookup(catalogs[getLocale()], here) ?? value, vars)
+        : build(value, here);
+  }
+  return out;
+}
+
+/** Localized messages, e.g. `msg.update.available({ current, latest })`. The language is resolved at call time. */
+export const msg = build(en) as Messages<typeof en>;

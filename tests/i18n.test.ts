@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { detectLocale, setLocale, t } from '../src/i18n';
+import { detectLocale, setLocale, msg } from '../src/i18n';
 import { en } from '../src/i18n/en';
 import { es } from '../src/i18n/es';
 
@@ -27,24 +27,44 @@ describe('detectLocale', () => {
   });
 });
 
-describe('t', () => {
+describe('msg', () => {
   it('devuelve el texto del idioma activo e interpola variables', () => {
     setLocale('en');
-    expect(t('update.available', { current: '1.0.0', latest: '2.0.0' })).toBe('New version available: 1.0.0 → 2.0.0');
+    expect(msg.update.available({ current: '1.0.0', latest: '2.0.0' })).toBe('New version available: 1.0.0 → 2.0.0');
     setLocale('es');
-    expect(t('update.available', { current: '1.0.0', latest: '2.0.0' })).toBe('Nueva versión disponible: 1.0.0 → 2.0.0');
+    expect(msg.update.available({ current: '1.0.0', latest: '2.0.0' })).toBe('Nueva versión disponible: 1.0.0 → 2.0.0');
+  });
+
+  it('resuelve el idioma al llamar, no al importar', () => {
+    const disable = msg.update.disable;
+    setLocale('en');
+    expect(disable()).toContain('disable');
+    setLocale('es');
+    expect(disable()).toContain('desactivar');
   });
 });
 
+type Tree = { readonly [key: string]: string | Tree };
+
+function flatten(node: Tree, prefix = ''): Record<string, string> {
+  return Object.entries(node).reduce<Record<string, string>>((acc, [key, value]) => {
+    const path = `${prefix}${key}`;
+    return typeof value === 'string' ? { ...acc, [path]: value } : { ...acc, ...flatten(value, `${path}.`) };
+  }, {});
+}
+
 describe('catálogos', () => {
+  const flatEn = flatten(en);
+  const flatEs = flatten(es);
+
   it('en y es tienen exactamente las mismas claves', () => {
-    expect(Object.keys(es).sort()).toEqual(Object.keys(en).sort());
+    expect(Object.keys(flatEs).sort()).toEqual(Object.keys(flatEn).sort());
   });
 
   it('es usa los mismos marcadores que en', () => {
     const vars = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort();
-    for (const key of Object.keys(en) as (keyof typeof en)[]) {
-      expect(vars(es[key])).toEqual(vars(en[key]));
+    for (const key of Object.keys(flatEn)) {
+      expect(vars(flatEs[key])).toEqual(vars(flatEn[key]));
     }
   });
 });
