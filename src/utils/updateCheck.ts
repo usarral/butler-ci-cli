@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { spawn } from "node:child_process";
 import chalk from "chalk";
+import { t } from "../i18n";
 
 const PACKAGE_NAME = "butler-ci-cli";
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -95,10 +96,15 @@ export function setupUpdateCheck(currentVersion: string): void {
   if (!process.stderr.isTTY) return;
 
   process.on("exit", () => {
+    const command = `npm install -g ${PACKAGE_NAME}@latest`;
+    const available = t("update.available", {
+      current: chalk.dim(currentVersion),
+      latest: chalk.green(cache.latestVersion),
+    });
     process.stderr.write(
-      `\n${chalk.yellow("⬆️  Nueva versión disponible:")} ${chalk.dim(currentVersion)} → ${chalk.green(cache.latestVersion)}\n` +
-        `   Actualiza con: ${chalk.cyan(`npm install -g ${PACKAGE_NAME}@latest`)}\n` +
-        `   ${chalk.dim("(desactivar este aviso: BUTLER_NO_UPDATE_CHECK=1)")}\n`
+      `\n${chalk.yellow("⬆️ ")} ${available}\n` +
+        `   ${t("update.command", { command: chalk.cyan(command) })}\n` +
+        `   ${chalk.dim(t("update.disable"))}\n`
     );
   });
 }
