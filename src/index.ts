@@ -24,7 +24,7 @@ const program = new Command();
 program
   .name("butler-ci-cli")
   .description("CLI para interactuar con Pipelines Jenkins")
-  .version("3.8.1");
+  .version("3.9.0");
 
 program
   .option("--debug", "Print diagnostic output to stderr (HTTP requests and responses, error causes). Also enabled with BUTLER_DEBUG=1")
