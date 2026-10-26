@@ -8,6 +8,8 @@ import { build } from "../build";
 import { listBuilds } from "../listBuilds";
 import { showLogs } from "../logs";
 import { abort } from "../abort";
+import { stages } from "../stages";
+import { batch } from "../batch";
 
 export function setupJobsCommands(program: Command): void {
   const jobsCommand = program
@@ -79,4 +81,23 @@ export function setupJobsCommands(program: Command): void {
     .option("-y, --yes", msg.cli.options.yes())
     .description(msg.cli.commands.abort())
     .action(abort);
+
+  jobsCommand
+    .command("stages")
+    .argument("<jobName>", msg.cli.arg.jobName())
+    .argument("[buildNumber]", msg.cli.arg.buildNumberOptional())
+    .description(msg.cli.commands.stages())
+    .action(stages);
+
+  jobsCommand
+    .command("batch")
+    .argument("[jobs...]", msg.cli.arg.jobsBatch())
+    .option("-f, --file <path>", msg.cli.options.file())
+    .option("--params <params>", msg.cli.options.batchParams())
+    .option("-c, --concurrency <number>", msg.cli.options.concurrency())
+    .option("--until <state>", msg.cli.options.untilState())
+    .option("-i, --interval <seconds>", msg.cli.options.batchInterval())
+    .option("-y, --yes", msg.cli.options.yesBatch())
+    .description(msg.cli.commands.batch())
+    .action(batch);
 }

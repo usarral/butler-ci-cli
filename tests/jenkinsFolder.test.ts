@@ -14,6 +14,9 @@ import {
   stripConsoleNotes,
   getBuildInfo,
   abortBuild,
+  buildJob,
+  getQueueItem,
+  getPipelineStages,
 } from '../src/utils/jenkinsFolder';
 import * as config from '../src/utils/config';
 import { resetJenkinsClient } from '../src/utils/jenkinsClient';
@@ -480,6 +483,70 @@ describe('Jenkins Folder Operations', () => {
 
       await expect(abortBuild('test-job-1', 999)).rejects.toThrow('999');
       expect(mockAxios.history.post).toHaveLength(0);
+    });
+  });
+
+  describe('buildJob', () => {
+    beforeEach(() => resetJenkinsClient());
+
+    it('should use /build for a job without parameters', async () => {
+      mockAxios.onPost('/job/plain/build').reply(201, '', { location: 'http://j/queue/item/9/' });
+
+      const result = await buildJob('plain');
+
+      expect(result.queueUrl).toBe('http://j/queue/item/9/');
+    });
+
+    it('should use buildWithParameters for a parameterized job even with no values', async () => {
+      mockAxios.onPost('/job/app/job/deploy/buildWithParameters').reply(201, '', { location: 'http://j/queue/item/10/' });
+
+      const result = await buildJob('app/deploy', undefined, { parameterized: true });
+
+      expect(result.queueUrl).toBe('http://j/queue/item/10/');
+      expect(mockAxios.history.post.map(r => r.url)).toEqual(['/job/app/job/deploy/buildWithParameters']);
+    });
+  });
+
+  describe('getQueueItem', () => {
+    beforeEach(() => resetJenkinsClient());
+
+    it('should return the build number once the item has started', async () => {
+      mockAxios.onGet(/\/queue\/item\/9\/api\/json/).reply(200, { cancelled: false, executable: { number: 12 } });
+
+      expect(await getQueueItem('http://other-root/queue/item/9/')).toEqual({ cancelled: false, buildNumber: 12 });
+    });
+
+    it('should report a waiting item and a cancelled one', async () => {
+      mockAxios.onGet(/\/queue\/item\/1\/api\/json/).reply(200, {});
+      mockAxios.onGet(/\/queue\/item\/2\/api\/json/).reply(200, { cancelled: true });
+
+      expect(await getQueueItem('http://j/queue/item/1/')).toEqual({ cancelled: false, buildNumber: undefined });
+      expect((await getQueueItem('http://j/queue/item/2/')).cancelled).toBe(true);
+    });
+
+    it('should reject a URL that is not a queue item', async () => {
+      await expect(getQueueItem('http://j/job/x/')).rejects.toThrow('http://j/job/x/');
+    });
+  });
+
+  describe('getPipelineStages', () => {
+    beforeEach(() => resetJenkinsClient());
+
+    it('should list the stages with their status', async () => {
+      mockAxios.onGet('/job/app/job/deploy/7/wfapi/describe').reply(200, {
+        stages: [{ name: 'Build', status: 'SUCCESS', durationMillis: 10 }, { name: 'Deploy', status: 'IN_PROGRESS' }],
+      });
+
+      expect(await getPipelineStages('app/deploy', 7)).toEqual([
+        { name: 'Build', status: 'SUCCESS', durationMillis: 10 },
+        { name: 'Deploy', status: 'IN_PROGRESS', durationMillis: undefined },
+      ]);
+    });
+
+    it('should fail instead of inventing a stage when wfapi is not available', async () => {
+      mockAxios.onGet('/job/plain/3/wfapi/describe').reply(404);
+
+      await expect(getPipelineStages('plain', 3)).rejects.toThrow('plain');
     });
   });
 });

@@ -99,6 +99,7 @@ export const es = {
   prompts: {
     confirmBuild: "¿Confirmas que quieres ejecutar este build?",
     confirmAbort: "¿Abortar el build #{build} del job {job}?",
+    confirmBatch: "¿Lanzar {count} builds, {concurrency} a la vez?",
     confirmDelete: '¿Estás seguro que quieres eliminar la configuración "{name}"?',
     selectConfigToDelete: "Selecciona la configuración a eliminar:",
     configName: "Nombre de la configuración:",
@@ -262,6 +263,35 @@ export const es = {
     paused: "Esperando entrada",
   },
 
+  stages: {
+    fetching: "Obteniendo stages del build {build} del job {job}",
+    none: "No se encontraron stages para el build #{build}.",
+    title: "Stages del pipeline",
+    hint: "Usa un nombre con: jobs batch ... --until \"stage:<nombre>\"",
+  },
+
+  batch: {
+    noJobs: "No hay jobs que ejecutar: indica nombres de job o usa --file.",
+    invalidUntil: "Valor de --until no válido: \"{value}\". Usa started, finished, success, paused o stage:<nombre>.",
+    invalidConcurrency: "La concurrencia debe ser un entero positivo (recibido \"{value}\").",
+    invalidInterval: "El intervalo debe ser un número positivo de segundos (recibido \"{value}\").",
+    unreadableManifest: "No se pudo leer {path}: {error}",
+    invalidManifest: "Manifiesto no válido {path}: {error}",
+    plan: "{count} jobs, como máximo {concurrency} a la vez. El siguiente se lanza cuando un build alcanza: {until}",
+    cancelled: "Lote cancelado: no se ha lanzado nada.",
+    launched: "[{position}/{total}] {job}: lanzado",
+    running: "{job}: en ejecución como build #{build}",
+    reached: "{job} #{build}: alcanzó {until}",
+    missed: "{job}: no alcanzó {until} ({reason})",
+    failed: "{job}: {error}",
+    reasonResult: "terminó como {result}",
+    reasonQueueCancelled: "sacado de la cola antes de empezar",
+    reasonStageEnded: "el stage \"{stage}\" terminó como {status}",
+    reasonNeverPaused: "el build terminó sin pausarse a la espera de aprobación",
+    reasonStageMissing: "el build terminó sin que el stage \"{stage}\" acabara con éxito",
+    summary: "Terminado: {reached} alcanzaron el objetivo, {missed} no, {failed} fallaron.",
+  },
+
   builds: {
     fetching: "Obteniendo lista de builds para {job}...",
     invalidSince: "Fecha de inicio inválida: {value}",
@@ -318,6 +348,8 @@ export const es = {
     abortRequested: "Se ha solicitado abortar el build #{build} del job {job}. Puede tardar unos segundos en terminar.",
     abortForbidden: "Sin permisos para abortar el build #{build} del job {job} (403).",
     abortError: "Error abortando el build #{build} del job {job}: {error}",
+    queueError: "Error obteniendo el item de cola {queue}: {error}",
+    stagesError: "Error obteniendo los stages del build #{build} del job {job}: {error}",
   },
 
   cli: {
@@ -328,6 +360,8 @@ export const es = {
     arg: {
       jobName: "Nombre del job (puede incluir carpetas: folder/subfolder/job)",
       jobNameShort: "Nombre del job",
+      jobsBatch: "Jobs a ejecutar (carpeta/job); pueden venir más de --file",
+      buildNumberOptional: "Número del build o 'latest' para el más reciente (default: latest)",
       buildNumber: "Número del build o 'latest' para el más reciente",
       searchTerm: "Término de búsqueda",
     },
@@ -340,6 +374,8 @@ export const es = {
       listBuilds: "Listar builds de un job con opciones de filtrado y paginación",
       logs: "Ver logs de un build específico",
       abort: "Abortar un build en ejecución",
+      stages: "Listar los stages de un build de pipeline (nombres para batch --until stage:<nombre>)",
+      batch: "Lanzar varios jobs limitando cuántos corren a la vez hasta que cada uno alcance un estado objetivo",
       showFolders: "Mostrar solo la estructura de carpetas de Jenkins",
       searchJobs: "Buscar jobs por nombre en toda la estructura de Jenkins",
       mcp: "Iniciar un servidor MCP (stdio) para conectar Claude, OpenCode y otros clientes",
@@ -360,6 +396,12 @@ export const es = {
       stream: "Ver logs en tiempo real (streaming mode)",
       interval: "Intervalo de actualización en segundos para streaming (default: 5)",
       yes: "Abortar sin pedir confirmación",
+      yesBatch: "Lanzar sin pedir confirmación",
+      batchParams: "Parámetros como key=value,key2=value2, aplicados a los jobs pasados como argumentos",
+      file: "Fichero JSON con los jobs a ejecutar (y opcionalmente concurrency, until, pollInterval)",
+      concurrency: "Máximo de builds en vuelo a la vez (default: 1)",
+      untilState: "Estado que libera un hueco: started, finished (default), success, paused (esperando aprobación) o stage:<nombre>",
+      batchInterval: "Intervalo de consulta en segundos (default: 5)",
       folders: "Mostrar también las carpetas",
       maxLevel: "Nivel máximo de profundidad a mostrar",
       readOnly: "Modo solo lectura: las herramientas que lanzan builds, escriben logs o crean/modifican/borran entornos responden con un error",

@@ -290,7 +290,8 @@ function getDefaultValue(param: any): any {
  */
 export async function buildJob(
   jobFullName: string,
-  parameters?: { [key: string]: any }
+  parameters?: { [key: string]: any },
+  options: { parameterized?: boolean } = {}
 ): Promise<{ queueUrl: string; message: string }> {
   const jenkins = getJenkinsClient();
   
@@ -301,12 +302,13 @@ export async function buildJob(
     let endpoint: string;
     let formData: URLSearchParams | undefined;
     
-    if (parameters && Object.keys(parameters).length > 0) {
+    // Un job con parámetros rechaza `/build` (400) aunque todos tengan valor por defecto
+    if (options.parameterized || (parameters && Object.keys(parameters).length > 0)) {
       endpoint = `/job/${jobPath}/buildWithParameters`;
       formData = new URLSearchParams();
       
       // Añadir cada parámetro al formulario
-      for (const [key, value] of Object.entries(parameters)) {
+      for (const [key, value] of Object.entries(parameters ?? {})) {
         formData.append(key, String(value));
       }
     } else {
@@ -695,5 +697,68 @@ export async function abortBuild(
       throw new Error(msg.api.abortForbidden({ build: build.number, job: jobFullName }));
     }
     throw new Error(msg.api.abortError({ build: build.number, job: jobFullName, error: error.message }));
+  }
+}
+
+/**
+ * Estado de un item de la cola de Jenkins
+ */
+export interface QueueItemInfo {
+  cancelled: boolean;
+  buildNumber?: number;
+}
+
+/**
+ * Consulta un item de la cola (la URL que devuelve `buildJob`). Cuando Jenkins empieza el
+ * build aparece `executable.number`; si alguien lo saca de la cola, `cancelled`.
+ */
+export async function getQueueItem(queueUrl: string): Promise<QueueItemInfo> {
+  const jenkins = getJenkinsClient();
+  const id = /\/queue\/item\/(\d+)/.exec(queueUrl)?.[1];
+
+  try {
+    if (!id) throw new Error(`unexpected queue URL "${queueUrl}"`);
+    // Se usa el id y no la URL completa: Jenkins la construye con su "root URL", que puede no ser la configurada
+    const response = await jenkins.get(`/queue/item/${id}/api/json?tree=cancelled,executable[number]`);
+    return {
+      cancelled: Boolean(response.data?.cancelled),
+      buildNumber: response.data?.executable?.number
+    };
+  } catch (error: any) {
+    throw new Error(msg.api.queueError({ queue: queueUrl, error: error.message }));
+  }
+}
+
+/**
+ * Etapa de un pipeline con su estado actual
+ */
+export interface PipelineStage {
+  name: string;
+  status: string;
+  durationMillis?: number;
+}
+
+/**
+ * Lista las etapas de un build (`wfapi/describe`, Pipeline Stage View). A diferencia de
+ * `getWorkflowSteps` no inventa una etapa genérica si la API no existe: falla, para que
+ * nadie espere por una etapa que no puede aparecer.
+ */
+export async function getPipelineStages(
+  jobFullName: string,
+  buildNumber: number | string
+): Promise<PipelineStage[]> {
+  const jenkins = getJenkinsClient();
+
+  try {
+    const jobPath = jobFullName.replace(/\//g, '/job/');
+    const response = await jenkins.get(`/job/${jobPath}/${buildNumber}/wfapi/describe`);
+
+    return (response.data?.stages ?? []).map((stage: any) => ({
+      name: stage.name,
+      status: stage.status || 'UNKNOWN',
+      durationMillis: stage.durationMillis
+    }));
+  } catch (error: any) {
+    throw new Error(msg.api.stagesError({ build: buildNumber, job: jobFullName, error: error.message }));
   }
 }
