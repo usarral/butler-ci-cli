@@ -370,6 +370,14 @@ butler-ci-cli jobs stages my-pipeline
 butler-ci-cli jobs stages backend/api-service 42
 ```
 
+##### `jobs template [folder]`
+Generates a JSONC manifest for `jobs batch` with every job of the active Jenkins (or of a folder) commented out, grouped by folder. Uncomment the ones you want to launch. Prints to stdout, or writes a file with `-o`; it will not overwrite an existing file without `--force`. `--with-params` adds each job's parameters with their default values (passwords and files are left out).
+
+```bash
+butler-ci-cli jobs template --with-params -o my-deploy.jsonc
+butler-ci-cli jobs batch --file my-deploy.jsonc
+```
+
 ##### `jobs batch [jobs...]`
 Launches several jobs while keeping at most `--concurrency` of them "in flight". A build stays in flight until it reaches the target state (`--until`); then its slot is freed and the next job in the list is launched. The command waits until every job has reached the target, and exits with code 1 if any did not (or could not be launched).
 
@@ -396,7 +404,7 @@ butler-ci-cli jobs batch app/deploy-a app/deploy-b --until paused
 # Launch the next job as soon as the "Build" stage of the previous one succeeds
 butler-ci-cli jobs batch app/one app/two --until "stage:Build"
 
-# Per-job parameters from a manifest
+# Per-job parameters from a manifest (JSON or JSONC: comments allowed)
 butler-ci-cli jobs batch --file pipelines.json
 ```
 
@@ -415,6 +423,8 @@ butler-ci-cli jobs batch --file pipelines.json
 ```
 
 Parameters that are not given use the job's defaults. The poll interval (`--interval`, seconds) defaults to 5.
+
+The manifest is parsed as JSONC, so you can keep a template with all your services and comment out the ones you do not want to launch; see [`docs/examples/batch-template.jsonc`](docs/examples/batch-template.jsonc) and [docs/BATCH.md](docs/BATCH.md).
 
 ##### `jobs logs <jobName> <buildNumber|latest>`
 View, download, or open logs from a specific build in an editor.
@@ -607,11 +617,13 @@ butler-ci-cli/
 │   │   ├── build.ts        # build command
 │   │   ├── batch.ts        # jobs batch command
 │   │   ├── stages.ts       # jobs stages command
+│   │   ├── template.ts     # jobs template command
 │   │   ├── listBuilds.ts   # list-builds command
 │   │   └── logs.ts         # logs command
 │   ├── mcp/                # MCP server (butler-ci-cli mcp)
 │   ├── utils/              # Utilities
 │   │   ├── batchRunner.ts  # Concurrency-limited batch engine and manifest
+│   │   ├── batchTemplate.ts # JSONC template renderer for jobs template
 │   │   ├── config.ts       # Configuration management
 │   │   ├── jenkinsClient.ts # HTTP client for Jenkins
 │   │   └── storage.ts      # Local storage management

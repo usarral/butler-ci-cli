@@ -79,7 +79,7 @@ Stage names are matched exactly (case included). `jobs stages` needs the Pipelin
 
 ## Recipe 4: a manifest with per-job parameters
 
-Parameters passed with `--params` are shared by every job given as an argument. When each job needs its own values, use a JSON manifest, for example `pipelines.json`:
+Parameters passed with `--params` are shared by every job given as an argument. When each job needs its own values, use a JSON (or JSONC, see recipe 5) manifest, for example `pipelines.json`:
 
 ```json
 {
@@ -104,6 +104,48 @@ butler-ci-cli jobs batch --file pipelines.json
 - Parameters you do not list use the job's defaults.
 - The same job can appear several times with different parameters; its output lines are numbered (`app/deploy-api (2/4)`) so they can be told apart.
 - Jobs given as arguments run first, then the ones in the file. Command-line flags (`--concurrency`, `--until`, `--interval`) override the manifest.
+
+## Recipe 5: a template with every service, commenting out what you do not need
+
+The manifest is read as **JSONC**: `//` and `/* ... */` comments and trailing commas are allowed (in `.json` files too). That lets you keep one template with all your services and comment out, each time, the ones you do not want to launch; only the uncommented entries run.
+
+[`examples/batch-template.jsonc`](examples/batch-template.jsonc) is a starting point:
+
+```jsonc
+{
+  "concurrency": 2,
+  "until": "paused",
+  "jobs": [
+    { "job": "app/backend/deploy-api", "params": { "ENVIRONMENT": "staging" } },
+    // { "job": "app/backend/deploy-worker", "params": { "ENVIRONMENT": "staging" } },
+    { "job": "app/frontend/deploy-web", "params": { "ENVIRONMENT": "staging" } },
+    // "app/tools/clear-cache",
+  ],
+}
+```
+
+```bash
+cp docs/examples/batch-template.jsonc my-deploy.jsonc   # edit it: comment/uncomment services
+butler-ci-cli jobs batch --file my-deploy.jsonc
+```
+
+Here only `deploy-api` and `deploy-web` are launched. If every job is commented out the command stops with an error instead of doing nothing.
+
+### Generating the template from your Jenkins
+
+You do not have to write the list of services by hand: `jobs template` reads the jobs from the active Jenkins and writes a JSONC manifest with **every job commented out**, grouped by folder (root jobs first). Disabled jobs are left out.
+
+```bash
+butler-ci-cli jobs template -o my-deploy.jsonc              # every job in Jenkins
+butler-ci-cli jobs template app/backend -o backend.jsonc    # only the jobs under a folder
+butler-ci-cli jobs template --with-params -o my-deploy.jsonc # also each job's parameters with their defaults
+butler-ci-cli jobs template > my-deploy.jsonc               # without -o it prints to stdout
+```
+
+Open the file, uncomment the jobs you want, adjust `concurrency` / `until` and run `butler-ci-cli jobs batch --file my-deploy.jsonc`.
+
+- With `--with-params` a job is written as `{ "job": ..., "params": { ... } }` using the default values, so you only edit the ones that change. It costs one extra request per job. Password and file parameters are never written.
+- An existing output file is not overwritten unless you pass `--force`, so a template you already edited is safe.
 
 ## Good to know
 

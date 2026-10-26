@@ -37,6 +37,46 @@ export function formatUntil(target: UntilTarget): string {
   return target.kind === "stage" ? `stage:${target.stage}` : target.kind;
 }
 
+/**
+ * Turns JSONC into plain JSON by blanking out line comments, block comments and trailing commas.
+ * Characters become spaces (newlines are kept) so error positions still match the original file.
+ */
+export function stripJsonc(text: string): string {
+  const out: string[] = [];
+  let lastComma = -1;
+  let i = 0;
+
+  while (i < text.length) {
+    const c = text[i];
+    const next = text[i + 1];
+
+    if (c === '"') {
+      lastComma = -1;
+      out.push(c);
+      for (i++; i < text.length; i++) {
+        out.push(text[i]);
+        if (text[i] === "\\" && i + 1 < text.length) out.push(text[++i]);
+        else if (text[i] === '"') break;
+      }
+      i++;
+    } else if (c === "/" && next === "/") {
+      for (; i < text.length && text[i] !== "\n"; i++) out.push(" ");
+    } else if (c === "/" && next === "*") {
+      const end = text.indexOf("*/", i + 2);
+      const stop = end === -1 ? text.length : end + 2;
+      for (; i < stop; i++) out.push(text[i] === "\n" ? "\n" : " ");
+    } else {
+      if (c === ",") lastComma = out.length;
+      else if ((c === "}" || c === "]") && lastComma !== -1) out[lastComma] = " ";
+      if (!/\s/.test(c) && c !== ",") lastComma = -1;
+      out.push(c);
+      i++;
+    }
+  }
+
+  return out.join("");
+}
+
 const manifestSchema = z.object({
   concurrency: z.number().int().positive().optional(),
   until: z.string().optional(),
@@ -51,14 +91,13 @@ const manifestSchema = z.object({
         }),
       ])
     )
-    .min(1),
 });
 
-/** Parses and validates the JSON manifest; a bare string in `jobs` is a job without parameters. */
+/** Parses and validates the JSON or JSONC manifest; a bare string in `jobs` is a job without parameters. */
 export function parseManifest(text: string, path: string): BatchManifest {
   let raw: unknown;
   try {
-    raw = JSON.parse(text);
+    raw = JSON.parse(stripJsonc(text));
   } catch (error: any) {
     throw new Error(msg.batch.invalidManifest({ path, error: error.message }));
   }
