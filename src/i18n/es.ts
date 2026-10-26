@@ -272,6 +272,7 @@ export const es = {
 
   batch: {
     noJobs: "No hay jobs que ejecutar: indica nombres de job o usa --file.",
+    noJobsInFile: "No hay jobs que ejecutar: {path} no tiene jobs activos (¿están todos comentados?).",
     invalidUntil: "Valor de --until no válido: \"{value}\". Usa started, finished, success, paused o stage:<nombre>.",
     invalidConcurrency: "La concurrencia debe ser un entero positivo (recibido \"{value}\").",
     invalidInterval: "El intervalo debe ser un número positivo de segundos (recibido \"{value}\").",
@@ -399,7 +400,7 @@ export const es = {
       yes: "Abortar sin pedir confirmación",
       yesBatch: "Lanzar sin pedir confirmación",
       batchParams: "Parámetros como key=value,key2=value2, aplicados a los jobs pasados como argumentos",
-      file: "Fichero JSON con los jobs a ejecutar (y opcionalmente concurrency, until, pollInterval)",
+      file: "Fichero JSON/JSONC con los jobs a ejecutar (y opcionalmente concurrency, until, pollInterval); admite comentarios y comas finales",
       concurrency: "Máximo de builds en vuelo a la vez (default: 1)",
       untilState: "Estado que libera un hueco: started, finished (default), success, paused (esperando aprobación) o stage:<nombre>",
       batchInterval: "Intervalo de consulta en segundos (default: 5)",

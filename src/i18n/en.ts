@@ -269,6 +269,7 @@ export const en = {
 
   batch: {
     noJobs: "No jobs to run: pass job names or use --file.",
+    noJobsInFile: "No jobs to run: {path} has no active jobs (are they all commented out?).",
     invalidUntil: "Invalid --until value \"{value}\". Use started, finished, success, paused or stage:<name>.",
     invalidConcurrency: "The concurrency must be a positive integer (got \"{value}\").",
     invalidInterval: "The interval must be a positive number of seconds (got \"{value}\").",
@@ -396,7 +397,7 @@ export const en = {
       yes: "Abort without asking for confirmation",
       yesBatch: "Launch without asking for confirmation",
       batchParams: "Parameters as key=value,key2=value2, applied to the jobs given as arguments",
-      file: "JSON file with the jobs to run (and optionally concurrency, until, pollInterval)",
+      file: "JSON/JSONC file with the jobs to run (and optionally concurrency, until, pollInterval); comments and trailing commas are allowed",
       concurrency: "Maximum number of builds in flight at once (default: 1)",
       untilState: "State that frees a slot: started, finished (default), success, paused (waiting for input) or stage:<name>",
       batchInterval: "Polling interval in seconds (default: 5)",

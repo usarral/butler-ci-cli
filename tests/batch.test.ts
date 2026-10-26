@@ -168,6 +168,21 @@ describe('resolveBatch', () => {
     expect(() => resolveBatch(['a'], { until: 'done' })).toThrow('--until');
   });
 
+  it('explica que el manifiesto no tiene jobs activos cuando está todo comentado', () => {
+    vi.mocked(readFileSync).mockReturnValue('{ "jobs": [ // "a",\n ] }');
+
+    expect(() => resolveBatch([], { file: 'plantilla.jsonc' })).toThrow('comentados');
+  });
+
+  it('un manifiesto sin jobs activos no impide usar los argumentos', () => {
+    vi.mocked(readFileSync).mockReturnValue('{ "concurrency": 2, "jobs": [] }');
+
+    const r = resolveBatch(['a'], { file: 'plantilla.jsonc' });
+
+    expect(r.entries).toEqual([{ job: 'a' }]);
+    expect(r.concurrency).toBe(2);
+  });
+
   it('informa de un manifiesto ilegible', () => {
     vi.mocked(readFileSync).mockImplementation(() => {
       throw new Error('ENOENT');

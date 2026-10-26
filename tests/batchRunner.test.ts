@@ -4,6 +4,7 @@ import {
   parseUntil,
   parseManifest,
   formatUntil,
+  stripJsonc,
   type BatchDeps,
   type BatchEvent,
   type Probe,
@@ -173,9 +174,68 @@ describe('parseManifest', () => {
     expect(() => parseManifest('{nope', 'p.json')).toThrow('p.json');
   });
 
-  it('rechaza jobs vacío, concurrencia no entera y params anidados, indicando la ruta', () => {
-    expect(() => parseManifest('{"jobs": []}', 'p.json')).toThrow('jobs');
+  it('rechaza falta de jobs, concurrencia no entera y params anidados, indicando la ruta', () => {
+    expect(() => parseManifest('{}', 'p.json')).toThrow('jobs');
     expect(() => parseManifest('{"concurrency": 1.5, "jobs": ["a"]}', 'p.json')).toThrow('concurrency');
     expect(() => parseManifest('{"jobs": [{"job": "a", "params": {"x": {"y": 1}}}]}', 'p.json')).toThrow('jobs.0');
+  });
+});
+
+describe('stripJsonc', () => {
+  const parse = (text: string) => JSON.parse(stripJsonc(text));
+
+  it('quita comentarios de línea y de bloque', () => {
+    expect(parse('{\n  // uno\n  "a": 1, /* dos */ "b": /* tres\n cuatro */ 2\n}')).toEqual({ a: 1, b: 2 });
+  });
+
+  it('quita comas finales en arrays y objetos, también tras comentarios', () => {
+    expect(parse('{"a": [1, 2, /* x */ ], "b": {"c": 3, // y\n},}')).toEqual({ a: [1, 2], b: { c: 3 } });
+  });
+
+  it('respeta lo que parece un comentario o una coma final dentro de una cadena', () => {
+    expect(parse('{"url": "http://example.com/*x*/", "t": ",]", "q": "a\\"//b"}')).toEqual({
+      url: 'http://example.com/*x*/',
+      t: ',]',
+      q: 'a"//b',
+    });
+  });
+
+  it('conserva longitud y saltos de línea para que las posiciones de error no cambien', () => {
+    const text = '{\n  // c\n  "a": [1,], /* x\n y */\n}';
+    const stripped = stripJsonc(text);
+
+    expect(stripped).toHaveLength(text.length);
+    expect(stripped.split('\n')).toHaveLength(text.split('\n').length);
+  });
+
+  it('deja intacto un JSON normal', () => {
+    const text = '{"a": [1, 2], "b": "x"}';
+    expect(stripJsonc(text)).toBe(text);
+  });
+
+  it('un comentario de bloque sin cerrar se come el resto y el JSON falla', () => {
+    expect(() => parseManifest('{"jobs": ["a"] /* sin cerrar', 'p.jsonc')).toThrow('p.jsonc');
+  });
+});
+
+describe('parseManifest con JSONC', () => {
+  it('ignora los jobs comentados', () => {
+    const manifest = parseManifest(
+      `{
+        // "until": "success",
+        "jobs": [
+          // "app/deploy-api",
+          "app/deploy-web", // activo
+          /* { "job": "app/deploy-worker", "params": { "ENV": "qa" } }, */
+        ],
+      }`,
+      'p.jsonc'
+    );
+
+    expect(manifest).toEqual({ jobs: [{ job: 'app/deploy-web' }] });
+  });
+
+  it('acepta una plantilla con todo comentado', () => {
+    expect(parseManifest('{ "jobs": [ // "a",\n ] }', 'p.jsonc')).toEqual({ jobs: [] });
   });
 });

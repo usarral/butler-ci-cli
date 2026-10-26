@@ -106,7 +106,9 @@ export function resolveBatch(jobs: string[], options: BatchOptions) {
     entries.push(...manifest.jobs);
   }
 
-  if (entries.length === 0) throw new Error(msg.batch.noJobs());
+  if (entries.length === 0) {
+    throw new Error(options.file ? msg.batch.noJobsInFile({ path: options.file }) : msg.batch.noJobs());
+  }
 
   const concurrency = options.concurrency !== undefined
     ? positiveNumber(options.concurrency, (v) => msg.batch.invalidConcurrency({ value: v }), true)

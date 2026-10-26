@@ -1,0 +1,31 @@
+// Template for `butler-ci-cli jobs batch --file batch-template.jsonc`.
+//
+// Keep every service listed here and comment out (//) the ones you do not want to run today:
+// only the uncommented entries are launched. Comments and trailing commas are allowed.
+// All the names are placeholders: replace them with your own jobs.
+{
+  // How many builds may be in flight at once (default: 1).
+  "concurrency": 2,
+
+  // When a slot is freed: started | finished | success | paused | stage:<name>
+  // Here: deploy up to the approval gate, then move on to the next one.
+  "until": "paused",
+
+  // Seconds between queries to Jenkins (default: 5).
+  "pollInterval": 5,
+
+  "jobs": [
+    // --- Backend ---
+    { "job": "app/backend/deploy-api", "params": { "ENVIRONMENT": "staging", "VERSION": "1.4.2" } },
+    // { "job": "app/backend/deploy-worker", "params": { "ENVIRONMENT": "staging", "VERSION": "1.4.2" } },
+    // { "job": "app/backend/deploy-scheduler", "params": { "ENVIRONMENT": "staging", "VERSION": "1.4.2" } },
+
+    // --- Frontend ---
+    { "job": "app/frontend/deploy-web", "params": { "ENVIRONMENT": "staging", "DRY_RUN": false } },
+    // { "job": "app/frontend/deploy-admin", "params": { "ENVIRONMENT": "staging", "DRY_RUN": false } },
+
+    // --- Jobs without parameters can be a plain string ---
+    // "app/tools/clear-cache",
+    // "app/tools/smoke-tests",
+  ],
+}
