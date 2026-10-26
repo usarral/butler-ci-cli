@@ -131,6 +131,22 @@ butler-ci-cli jobs batch --file my-deploy.jsonc
 
 Here only `deploy-api` and `deploy-web` are launched. If every job is commented out the command stops with an error instead of doing nothing.
 
+### Generating the template from your Jenkins
+
+You do not have to write the list of services by hand: `jobs template` reads the jobs from the active Jenkins and writes a JSONC manifest with **every job commented out**, grouped by folder (root jobs first). Disabled jobs are left out.
+
+```bash
+butler-ci-cli jobs template -o my-deploy.jsonc              # every job in Jenkins
+butler-ci-cli jobs template app/backend -o backend.jsonc    # only the jobs under a folder
+butler-ci-cli jobs template --with-params -o my-deploy.jsonc # also each job's parameters with their defaults
+butler-ci-cli jobs template > my-deploy.jsonc               # without -o it prints to stdout
+```
+
+Open the file, uncomment the jobs you want, adjust `concurrency` / `until` and run `butler-ci-cli jobs batch --file my-deploy.jsonc`.
+
+- With `--with-params` a job is written as `{ "job": ..., "params": { ... } }` using the default values, so you only edit the ones that change. It costs one extra request per job. Password and file parameters are never written.
+- An existing output file is not overwritten unless you pass `--force`, so a template you already edited is safe.
+
 ## Good to know
 
 - **Nothing is launched until every job has been checked.** A misspelled name or a folder fails the whole command before the first build starts. It then asks for confirmation (skip it with `--yes`, needed in scripts and CI).
