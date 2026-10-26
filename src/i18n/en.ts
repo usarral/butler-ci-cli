@@ -284,8 +284,9 @@ export const en = {
     reasonResult: "finished as {result}",
     reasonQueueCancelled: "removed from the queue before starting",
     reasonStageEnded: "stage \"{stage}\" ended as {status}",
-    reasonNeverPaused: "the build finished without pausing for input",
-    reasonStageMissing: "the build finished without stage \"{stage}\" succeeding",
+    reasonNeverPaused: "the build finished as {result} without pausing for input",
+    reasonStageMissing: "the build finished as {result} without stage \"{stage}\" succeeding",
+    reasonFailedAt: "{reason}; stage \"{stage}\" ended as {status}",
     summary: "Done: {reached} reached the target, {missed} did not, {failed} failed.",
   },
 

@@ -99,7 +99,31 @@ describe('probeBuild', () => {
 
     const probe = await probeBuild('a', { queueUrl: 'q', build: 7 }, { kind: 'paused' });
 
-    expect(probe).toEqual({ state: 'missed', reason: expect.stringContaining('pausar') });
+    expect(probe).toEqual({ state: 'missed', reason: expect.stringContaining('pausarse') });
+  });
+
+  it('paused indica el resultado del build y el stage que falló', async () => {
+    vi.mocked(folder.getBuildInfo).mockResolvedValue(finished('FAILURE'));
+    vi.mocked(folder.getPipelineStages).mockResolvedValue([
+      { name: 'Deploy', status: 'SUCCESS' },
+      { name: 'Test', status: 'FAILED' },
+    ]);
+
+    const probe = await probeBuild('a', { queueUrl: 'q', build: 7 }, { kind: 'paused' });
+
+    expect(probe).toEqual({
+      state: 'missed',
+      reason: expect.stringMatching(/FAILURE.*stage "Test" terminó como FAILED/),
+    });
+  });
+
+  it('stage inexistente en un build fallido indica el resultado', async () => {
+    vi.mocked(folder.getBuildInfo).mockResolvedValue(finished('FAILURE'));
+    vi.mocked(folder.getPipelineStages).mockResolvedValue([{ name: 'Build', status: 'FAILED' }]);
+
+    const probe = await probeBuild('a', { queueUrl: 'q', build: 7 }, { kind: 'stage', stage: 'Deploy' });
+
+    expect(probe).toEqual({ state: 'missed', reason: expect.stringMatching(/FAILURE.*"Deploy".*"Build"/) });
   });
 
   it('stage fallida libera de inmediato', async () => {

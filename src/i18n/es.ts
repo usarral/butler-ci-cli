@@ -287,8 +287,9 @@ export const es = {
     reasonResult: "terminó como {result}",
     reasonQueueCancelled: "sacado de la cola antes de empezar",
     reasonStageEnded: "el stage \"{stage}\" terminó como {status}",
-    reasonNeverPaused: "el build terminó sin pausarse a la espera de aprobación",
-    reasonStageMissing: "el build terminó sin que el stage \"{stage}\" acabara con éxito",
+    reasonNeverPaused: "el build terminó como {result} sin pausarse a la espera de aprobación",
+    reasonStageMissing: "el build terminó como {result} sin que el stage \"{stage}\" acabara con éxito",
+    reasonFailedAt: "{reason}; el stage \"{stage}\" terminó como {status}",
     summary: "Terminado: {reached} alcanzaron el objetivo, {missed} no, {failed} fallaron.",
   },
 
