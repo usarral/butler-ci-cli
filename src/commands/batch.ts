@@ -6,6 +6,7 @@ import {
   getJobInfo,
   getPipelineStages,
   getQueueItem,
+  type PipelineStage,
 } from "../utils/jenkinsFolder";
 import {
   BatchEntry,
@@ -35,6 +36,12 @@ export interface BatchOptions {
 
 const STAGE_FAILED = new Set(["FAILED", "FAILURE", "ABORTED", "UNSTABLE"]);
 
+/** Adds the first failed stage, if any, to the reason why a finished build never reached the target. */
+function withFailedStage(reason: string, stages: PipelineStage[]): string {
+  const failed = stages.find((s) => STAGE_FAILED.has(s.status));
+  return failed ? msg.batch.reasonFailedAt({ reason, stage: failed.name, status: failed.status }) : reason;
+}
+
 /** Looks at a launched build and says whether it reached the target, can no longer reach it, or is still going. */
 export async function probeBuild(job: string, handle: LaunchHandle, target: UntilTarget): Promise<Probe> {
   if (handle.build === undefined) {
@@ -49,20 +56,23 @@ export async function probeBuild(job: string, handle: LaunchHandle, target: Unti
   const build = await getBuildInfo(job, handle.build);
 
   if (target.kind === "paused") {
-    const paused = (await getPipelineStages(job, handle.build)).find((s) => s.status === "PAUSED_PENDING_INPUT");
-    if (paused) return { state: "reached" };
-    return build.building ? { state: "waiting" } : { state: "missed", reason: msg.batch.reasonNeverPaused() };
+    const stages = await getPipelineStages(job, handle.build);
+    if (stages.some((s) => s.status === "PAUSED_PENDING_INPUT")) return { state: "reached" };
+    if (build.building) return { state: "waiting" };
+    const result = build.result ?? "UNKNOWN";
+    return { state: "missed", reason: withFailedStage(msg.batch.reasonNeverPaused({ result }), stages) };
   }
 
   if (target.kind === "stage") {
-    const stage = (await getPipelineStages(job, handle.build)).find((s) => s.name === target.stage);
+    const stages = await getPipelineStages(job, handle.build);
+    const stage = stages.find((s) => s.name === target.stage);
     if (stage?.status === "SUCCESS") return { state: "reached" };
     if (stage && STAGE_FAILED.has(stage.status)) {
       return { state: "missed", reason: msg.batch.reasonStageEnded({ stage: target.stage, status: stage.status }) };
     }
-    return build.building
-      ? { state: "waiting" }
-      : { state: "missed", reason: msg.batch.reasonStageMissing({ stage: target.stage }) };
+    if (build.building) return { state: "waiting" };
+    const result = build.result ?? "UNKNOWN";
+    return { state: "missed", reason: withFailedStage(msg.batch.reasonStageMissing({ stage: target.stage, result }), stages) };
   }
 
   if (build.building) return { state: "waiting" };
