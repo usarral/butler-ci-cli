@@ -122,7 +122,7 @@ async function promptForParameters(
 /**
  * Parsea parámetros pasados por CLI en formato key=value,key2=value2
  */
-function parseCliParams(paramsString: string): { [key: string]: any } {
+export function parseCliParams(paramsString: string): { [key: string]: any } {
   const params: { [key: string]: any } = {};
   
   const pairs = paramsString.split(',');

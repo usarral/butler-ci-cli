@@ -25,6 +25,7 @@ Butler CI CLI is a terminal application that allows you to manage and monitor Je
 - 📋 Query required parameters for jobs
 - 🚀 Execute builds in an assisted manner (interactive or with CLI parameters)
 - 🛑 Abort running builds
+- 🚦 Launch several jobs with a cap on how many run at once, freeing a slot when each reaches a target state
 - 📄 View and download build logs
 - 🔄 Stream logs in real-time with configurable refresh intervals
 - ✏️ Open logs in configurable editors
@@ -361,6 +362,60 @@ butler-ci-cli jobs abort my-job latest
 butler-ci-cli jobs abort my-job 42 --yes   # No confirmation
 ```
 
+##### `jobs stages <jobName> [buildNumber|latest]`
+Lists the stages of a Pipeline build (the latest one by default) with their status. Use it to find the exact stage name for `jobs batch --until stage:<name>`. It needs the Pipeline Stage View plugin (`wfapi`); the job must have run at least once.
+
+```bash
+butler-ci-cli jobs stages my-pipeline
+butler-ci-cli jobs stages backend/api-service 42
+```
+
+##### `jobs batch [jobs...]`
+Launches several jobs while keeping at most `--concurrency` of them "in flight". A build stays in flight until it reaches the target state (`--until`); then its slot is freed and the next job in the list is launched. The command waits until every job has reached the target, and exits with code 1 if any did not (or could not be launched).
+
+| `--until` | The slot is freed when... |
+| --- | --- |
+| `started` | the build leaves the queue and starts running |
+| `finished` (default) | the build ends, whatever its result |
+| `success` | the build ends with `SUCCESS` |
+| `paused` | the build stops at an `input` step waiting for approval (a stage in `PAUSED_PENDING_INPUT`); it stays paused until someone answers |
+| `stage:<name>` | the stage `<name>` ends with `SUCCESS`, even if the build keeps running |
+
+A build that can no longer reach the target (e.g. it ended as `FAILURE` while waiting for `success`, or it was removed from the queue) also frees its slot and is reported as not reached; the rest of the batch continues. Jobs are checked before anything is launched, so a typo does not leave the batch half-started. It asks for confirmation unless you pass `--yes`.
+
+```bash
+# One at a time (default), each starts when the previous one finishes
+butler-ci-cli jobs batch app/build app/test app/deploy
+
+# Two at a time, same parameters for all the jobs given as arguments
+butler-ci-cli jobs batch job-a job-b job-c --concurrency 2 --params "ENVIRONMENT=staging" --until success
+
+# Deploy several things up to their approval gate, one after another
+butler-ci-cli jobs batch app/deploy-a app/deploy-b --until paused
+
+# Launch the next job as soon as the "Build" stage of the previous one succeeds
+butler-ci-cli jobs batch app/one app/two --until "stage:Build"
+
+# Per-job parameters from a manifest
+butler-ci-cli jobs batch --file pipelines.json
+```
+
+`pipelines.json` (jobs may also be given as arguments, which run first; flags override the manifest settings, all of which are optional):
+
+```json
+{
+  "concurrency": 2,
+  "until": "success",
+  "pollInterval": 5,
+  "jobs": [
+    "app/build",
+    { "job": "app/deploy", "params": { "ENVIRONMENT": "staging", "DRY_RUN": false } }
+  ]
+}
+```
+
+Parameters that are not given use the job's defaults. The poll interval (`--interval`, seconds) defaults to 5.
+
 ##### `jobs logs <jobName> <buildNumber|latest>`
 View, download, or open logs from a specific build in an editor.
 
@@ -550,10 +605,13 @@ butler-ci-cli/
 │   │   ├── fetchJobs.ts    # fetch-jobs command
 │   │   ├── jobInfo.ts      # job-info command
 │   │   ├── build.ts        # build command
+│   │   ├── batch.ts        # jobs batch command
+│   │   ├── stages.ts       # jobs stages command
 │   │   ├── listBuilds.ts   # list-builds command
 │   │   └── logs.ts         # logs command
 │   ├── mcp/                # MCP server (butler-ci-cli mcp)
 │   ├── utils/              # Utilities
+│   │   ├── batchRunner.ts  # Concurrency-limited batch engine and manifest
 │   │   ├── config.ts       # Configuration management
 │   │   ├── jenkinsClient.ts # HTTP client for Jenkins
 │   │   └── storage.ts      # Local storage management
@@ -613,6 +671,7 @@ Want to contribute? Great! Check out our [Contributing Guide](CONTRIBUTING.md) f
 
 - **[README](README.md)** - This guide
 - **[FAQ](docs/FAQ.md)** - Frequently asked questions
+- **[Batch runs](docs/BATCH.md)** - Launch several jobs with limited concurrency (`jobs batch`)
 - **[Examples Guide](docs/EXAMPLES.md)** - Practical examples
 - **[Architecture](docs/ARCHITECTURE.md)** - Technical documentation
 - **[Jenkins API](docs/JENKINS_API.md)** - API guide

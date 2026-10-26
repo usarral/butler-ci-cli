@@ -96,6 +96,7 @@ export const en = {
   prompts: {
     confirmBuild: "Do you want to run this build?",
     confirmAbort: "Abort build #{build} of job {job}?",
+    confirmBatch: "Launch {count} builds, {concurrency} at a time?",
     confirmDelete: 'Are you sure you want to delete configuration "{name}"?',
     selectConfigToDelete: "Select the configuration to delete:",
     configName: "Configuration name:",
@@ -259,6 +260,35 @@ export const en = {
     paused: "Waiting for input",
   },
 
+  stages: {
+    fetching: "Fetching stages of build {build} of job {job}",
+    none: "No stages found for build #{build}.",
+    title: "Pipeline stages",
+    hint: "Use a name with: jobs batch ... --until \"stage:<name>\"",
+  },
+
+  batch: {
+    noJobs: "No jobs to run: pass job names or use --file.",
+    invalidUntil: "Invalid --until value \"{value}\". Use started, finished, success, paused or stage:<name>.",
+    invalidConcurrency: "The concurrency must be a positive integer (got \"{value}\").",
+    invalidInterval: "The interval must be a positive number of seconds (got \"{value}\").",
+    unreadableManifest: "Could not read {path}: {error}",
+    invalidManifest: "Invalid manifest {path}: {error}",
+    plan: "{count} jobs, at most {concurrency} at a time. The next one starts when a build reaches: {until}",
+    cancelled: "Batch cancelled: nothing was launched.",
+    launched: "[{position}/{total}] {job}: launched",
+    running: "{job}: running as build #{build}",
+    reached: "{job} #{build}: reached {until}",
+    missed: "{job}: did not reach {until} ({reason})",
+    failed: "{job}: {error}",
+    reasonResult: "finished as {result}",
+    reasonQueueCancelled: "removed from the queue before starting",
+    reasonStageEnded: "stage \"{stage}\" ended as {status}",
+    reasonNeverPaused: "the build finished without pausing for input",
+    reasonStageMissing: "the build finished without stage \"{stage}\" succeeding",
+    summary: "Done: {reached} reached the target, {missed} did not, {failed} failed.",
+  },
+
   builds: {
     fetching: "Fetching build list for {job}...",
     invalidSince: "Invalid start date: {value}",
@@ -315,6 +345,8 @@ export const en = {
     abortRequested: "Abort requested for build #{build} of job {job}. It may take a few seconds to finish.",
     abortForbidden: "No permission to abort build #{build} of job {job} (403).",
     abortError: "Error aborting build #{build} of job {job}: {error}",
+    queueError: "Error fetching queue item {queue}: {error}",
+    stagesError: "Error fetching stages of build #{build} of job {job}: {error}",
   },
 
   cli: {
@@ -325,6 +357,8 @@ export const en = {
     arg: {
       jobName: "Job name (may include folders: folder/subfolder/job)",
       jobNameShort: "Job name",
+      jobsBatch: "Jobs to run (folder/job); more can come from --file",
+      buildNumberOptional: "Build number, or 'latest' for the most recent one (default: latest)",
       buildNumber: "Build number, or 'latest' for the most recent one",
       searchTerm: "Search term",
     },
@@ -337,6 +371,8 @@ export const en = {
       listBuilds: "List a job's builds with filtering and pagination",
       logs: "View the logs of a specific build",
       abort: "Abort a running build",
+      stages: "List the stages of a pipeline build (names to use with batch --until stage:<name>)",
+      batch: "Launch several jobs, limiting how many run at once until each reaches a target state",
       showFolders: "Show only the folder structure of Jenkins",
       searchJobs: "Search jobs by name across the whole Jenkins structure",
       mcp: "Start an MCP server (stdio) to connect Claude, OpenCode and other clients",
@@ -357,6 +393,12 @@ export const en = {
       stream: "Follow the logs in real time (streaming mode)",
       interval: "Refresh interval in seconds for streaming (default: 5)",
       yes: "Abort without asking for confirmation",
+      yesBatch: "Launch without asking for confirmation",
+      batchParams: "Parameters as key=value,key2=value2, applied to the jobs given as arguments",
+      file: "JSON file with the jobs to run (and optionally concurrency, until, pollInterval)",
+      concurrency: "Maximum number of builds in flight at once (default: 1)",
+      untilState: "State that frees a slot: started, finished (default), success, paused (waiting for input) or stage:<name>",
+      batchInterval: "Polling interval in seconds (default: 5)",
       folders: "Also show the folders",
       maxLevel: "Maximum depth level to show",
       readOnly: "Read-only mode: tools that start builds, write logs or create/modify/delete environments answer with an error",

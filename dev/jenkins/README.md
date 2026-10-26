@@ -40,6 +40,7 @@ Every `pipelines/**/<name>.groovy` becomes a Pipeline job at the same path on fi
 | `hello-world`                    | Four stages, no parameters                                                           |
 | `parametrized-build`             | `string`, `choice`, `boolean`, `password` and `text` parameters; fails if `ENVIRONMENT=production` without `RUN_TESTS` |
 | `flaky`                          | `OUTCOME` parameter to produce a successful, unstable or failed build on demand      |
+| `approval-gate`                  | Pauses at an `input` step (stage `PAUSED_PENDING_INPUT`) without holding an executor: try `jobs batch --until paused` |
 | `team-a/long-running`            | About two minutes long: try `jobs abort` and `jobs logs --stream`                    |
 | `team-a/backend/deploy-service`  | Job inside nested folders, with parameters                                           |
 
