@@ -10,6 +10,7 @@ import { showLogs } from "../logs";
 import { abort } from "../abort";
 import { stages } from "../stages";
 import { batch } from "../batch";
+import { template } from "../template";
 
 export function setupJobsCommands(program: Command): void {
   const jobsCommand = program
@@ -100,4 +101,13 @@ export function setupJobsCommands(program: Command): void {
     .option("-y, --yes", msg.cli.options.yesBatch())
     .description(msg.cli.commands.batch())
     .action(batch);
+
+  jobsCommand
+    .command("template")
+    .argument("[folder]", msg.cli.arg.templateFolder())
+    .option("-o, --output <path>", msg.cli.options.templateOutput())
+    .option("--with-params", msg.cli.options.withParams())
+    .option("--force", msg.cli.options.force())
+    .description(msg.cli.commands.template())
+    .action(template);
 }
