@@ -39,25 +39,25 @@
   ],
   "author": "usarral",
   "license": "MIT",
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@10.34.9",
   "devDependencies": {
     "@types/inquirer": "9.0.10",
-    "@types/node": "24.13.3",
-    "@vitest/coverage-v8": "4.1.11",
-    "@vitest/ui": "4.1.11",
+    "@types/node": "24.19.2",
+    "@vitest/coverage-v8": "4.1.12",
+    "@vitest/ui": "4.1.12",
     "axios-mock-adapter": "2.1.0",
     "ts-node": "10.9.2",
     "typescript": "7.0.2",
-    "vitest": "4.1.11"
+    "vitest": "4.1.12"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.32.1",
-    "axios": "1.20.0",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "axios": "1.21.0",
     "chalk": "5.6.2",
     "commander": "14.0.3",
     "inquirer": "12.11.1",
-    "pino": "10.3.1",
-    "pino-pretty": "13.1.3",
+    "pino": "10.4.0",
+    "pino-pretty": "13.2.0",
     "zod": "4.6.7"
   }
 }
