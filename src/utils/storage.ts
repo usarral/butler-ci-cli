@@ -1,26 +1,62 @@
-import { promises as fs } from "fs";
-import path from "path";
-
-const JOBS_FILE = path.resolve(__dirname, "../../data/jobs.json");
+import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
 
 /**
- * Guarda los nombres de los jobs en un archivo local.
+ * Caché de nombres de jobs, un fichero por entorno (configuración):
+ * ~/.butler-ci-cli/jobs/<entorno>.json
+ *
+ * Es síncrona a propósito: el autocompletado la lee en cada TAB.
  */
-export async function saveJobs(jobs: string[]): Promise<void> {
-  const data = { jobs };
-  await fs.mkdir(path.dirname(JOBS_FILE), { recursive: true });
-  await fs.writeFile(JOBS_FILE, JSON.stringify(data, null, 2), "utf-8");
+export interface JobsCache {
+  environment: string;
+  fetchedAt: string;
+  jobs: string[];
 }
 
-/**
- * Recupera los nombres de los jobs guardados.
- */
-export async function loadJobs(): Promise<string[]> {
+function jobsDir(): string {
+  return join(homedir(), ".butler-ci-cli", "jobs");
+}
+
+function jobsFile(environment: string): string {
+  return join(jobsDir(), `${environment}.json`);
+}
+
+/** Guarda los nombres de los jobs de un entorno, sustituyendo lo anterior. */
+export function saveJobs(environment: string, jobs: string[]): void {
+  mkdirSync(jobsDir(), { recursive: true });
+  const data: JobsCache = { environment, fetchedAt: new Date().toISOString(), jobs };
+  writeFileSync(jobsFile(environment), JSON.stringify(data, null, 2), "utf-8");
+}
+
+/** Lee la caché de un entorno; null si no existe o está corrupta. */
+export function loadJobsCache(environment: string): JobsCache | null {
   try {
-    const content = await fs.readFile(JOBS_FILE, "utf-8");
-    const data = JSON.parse(content);
-    return data.jobs || [];
-  } catch (error) {
-    return [];
+    const file = jobsFile(environment);
+    if (!existsSync(file)) return null;
+    const data = JSON.parse(readFileSync(file, "utf-8"));
+    if (!Array.isArray(data.jobs)) return null;
+    return {
+      environment,
+      fetchedAt: String(data.fetchedAt ?? ""),
+      jobs: data.jobs.filter((j: unknown): j is string => typeof j === "string"),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Nombres de jobs de un entorno (vacío si no hay caché). */
+export function loadJobs(environment: string): string[] {
+  return loadJobsCache(environment)?.jobs ?? [];
+}
+
+/** Borra la caché de un entorno. Nunca lanza. */
+export function deleteJobs(environment: string): void {
+  try {
+    const file = jobsFile(environment);
+    if (existsSync(file)) unlinkSync(file);
+  } catch {
+    // la caché es prescindible
   }
 }

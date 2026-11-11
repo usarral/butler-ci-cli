@@ -256,11 +256,26 @@ Edits configuration preferences (editor, log viewer, download directory).
 #### General Commands
 
 ##### `fetch-jobs`
-Downloads and saves the list of all available jobs in Jenkins, including those within folders and subfolders.
+Downloads and saves the list of all available jobs in Jenkins, including those within folders and subfolders. The list is stored **per environment** in `~/.butler-ci-cli/jobs/<environment>.json` and feeds [tab completion](#tab-completion). It is fetched automatically when you create an environment (`config create`, if you activate it) and the first time you `config use` an environment that has no saved list; run `fetch-jobs` to refresh it. If Jenkins can't be reached, the previously saved list is kept. Deleting an environment deletes its list.
 
 ```bash
 butler-ci-cli fetch-jobs
 ```
+
+##### Tab completion
+
+Complete commands, options, environment names and job names (from the active environment's saved list) with TAB:
+
+```bash
+# bash: add to ~/.bashrc
+source <(butler-ci-cli completion bash)
+# zsh: add to ~/.zshrc
+source <(butler-ci-cli completion zsh)
+# fish
+butler-ci-cli completion fish > ~/.config/fish/completions/butler-ci-cli.fish
+```
+
+Job names are completed folder by folder (`jobs build back<TAB>` → `backend/` → `backend/api`). Each environment has its own list, so switching with `config use` switches the suggestions. Each TAB starts the CLI (~0.3 s). Deprecated aliases (`job-info`, `build`, ...) are not suggested.
 
 ##### `list-jobs`
 Shows all available jobs in Jenkins with hierarchical folder structure.

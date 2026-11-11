@@ -4,6 +4,7 @@ import { homedir } from "node:os";
 import { logger } from "./logger";
 import { msg } from "../i18n";
 import { formatters } from "./formatters";
+import { deleteJobs } from "./storage";
 
 export interface JenkinsConfig {
   name: string;
@@ -94,6 +95,7 @@ class ConfigManagerImpl implements ConfigManager {
 
     try {
       unlinkSync(configPath);
+      deleteJobs(name);
       
       // Si es la configuración actual, limpiar la referencia
       const currentConfig = this.getCurrentConfig();

@@ -4,6 +4,7 @@ import { logger } from "../../utils/logger";
 import { msg } from "../../i18n";
 import { icons } from "../../utils/icons";
 import { formatters } from "../../utils/formatters";
+import { fetchJobs } from "../fetchJobs";
 
 export async function createConfig(): Promise<void> {
   logger.info(formatters.info(`${icons.gear} ${msg.config.create.title()}\n`));
@@ -79,6 +80,8 @@ export async function createConfig(): Promise<void> {
     if (answers.setAsCurrent) {
       configManager.setCurrentConfig(config.name);
       logger.info(formatters.success(`${icons.success} ${msg.success.configActivated({ name: config.name })}`));
+      // Solo se puede consultar Jenkins con el entorno activo; si no se activa, se hará en `config use`.
+      await fetchJobs({ background: true, timeoutMs: 15000 });
     }
 
     logger.info(formatters.secondary(`${icons.folder} ${msg.config.create.savedAt({ dir: configManager.getConfigDir() })}`));

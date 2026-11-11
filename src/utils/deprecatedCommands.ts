@@ -3,6 +3,9 @@ import { logger } from "./logger";
 import { icons } from "./icons";
 import { msg } from "../i18n";
 
+/** Alias deprecados: siguen funcionando pero no se ofrecen en el autocompletado. */
+export const deprecatedAliases = new WeakSet<Command>();
+
 /**
  * Creates a deprecated command alias that shows a warning message when used.
  * 
@@ -24,6 +27,7 @@ export function createDeprecatedAlias(
   }
 ): void {
   const cmd = program.command(commandName);
+  deprecatedAliases.add(cmd);
   
   if (options?.args) {
     options.args.forEach(arg => {
