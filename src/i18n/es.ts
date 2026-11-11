@@ -248,6 +248,18 @@ export const es = {
   fetch: {
     examples: "Ejemplos de jobs encontrados:",
     more: "... y {count} más",
+    noJobs: "No se encontró ningún job; la lista guardada de \"{environment}\" no se ha modificado.",
+    autoFetching: "Guardando la lista de jobs de \"{environment}\" para el autocompletado...",
+    autoFetchFailed: "No se pudo guardar la lista de jobs ({error}). Ejecuta 'butler-ci-cli fetch-jobs' más tarde.",
+  },
+
+  completion: {
+    description: "Imprime el script de autocompletado para tu shell",
+    shellArg: "Shell de destino: bash, zsh o fish",
+    unsupportedShell: "Shell no soportada \"{shell}\". Usa una de: bash, zsh, fish.",
+    installBash: "# Añade a ~/.bashrc:  source <(butler-ci-cli completion bash)",
+    installZsh: "# Añade a ~/.zshrc:  source <(butler-ci-cli completion zsh)",
+    installFish: "# Guárdalo como ~/.config/fish/completions/butler-ci-cli.fish",
   },
 
   steps: {

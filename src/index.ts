@@ -15,6 +15,7 @@ import { listBuilds } from "./commands/listBuilds";
 import { jobSteps } from "./commands/jobSteps";
 import { setupConfigCommands } from "./commands/config";
 import { setupJobsCommands } from "./commands/jobs";
+import { setupCompletionCommands } from "./commands/completion";
 import { createDeprecatedAlias } from "./utils/deprecatedCommands";
 import { setupUpdateCheck } from "./utils/updateCheck";
 import { enableDebug, startDebugSession } from "./utils/debug";
@@ -162,7 +163,7 @@ createDeprecatedAlias(
 );
 
 // Comandos existentes de Jenkins (fetch-jobs, list-jobs, etc.)
-program.command("fetch-jobs").action(fetchJobs);
+program.command("fetch-jobs").action(async () => { await fetchJobs(); });
 
 program
   .command("list-jobs")
@@ -189,6 +190,8 @@ program
   .argument("<searchTerm>", msg.cli.arg.searchTerm())
   .description(msg.cli.commands.searchJobs())
   .action(searchJobs);
+
+setupCompletionCommands(program);
 
 setupUpdateCheck(program.version() as string);
 

@@ -245,6 +245,18 @@ export const en = {
   fetch: {
     examples: "Examples of jobs found:",
     more: "... and {count} more",
+    noJobs: "No jobs were found; the saved list for \"{environment}\" was left unchanged.",
+    autoFetching: "Saving the job list of \"{environment}\" for tab completion...",
+    autoFetchFailed: "Could not save the job list ({error}). Run 'butler-ci-cli fetch-jobs' later.",
+  },
+
+  completion: {
+    description: "Print the tab-completion script for your shell",
+    shellArg: "Target shell: bash, zsh or fish",
+    unsupportedShell: "Unsupported shell \"{shell}\". Use one of: bash, zsh, fish.",
+    installBash: "# Add to ~/.bashrc:  source <(butler-ci-cli completion bash)",
+    installZsh: "# Add to ~/.zshrc:  source <(butler-ci-cli completion zsh)",
+    installFish: "# Save as ~/.config/fish/completions/butler-ci-cli.fish",
   },
 
   steps: {

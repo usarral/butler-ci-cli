@@ -27,8 +27,8 @@ export function isNewerVersion(latest: string, current: string): boolean {
 
 export function updateCheckDisabled(env: NodeJS.ProcessEnv = process.env, argv: string[] = process.argv): boolean {
   if (env.BUTLER_NO_UPDATE_CHECK || env.NO_UPDATE_NOTIFIER || env.CI) return true;
-  // `mcp` habla un protocolo por stdio: no se toca nada en ese proceso.
-  return argv[2] === "mcp";
+  // `mcp` habla un protocolo por stdio y `__complete` se ejecuta en cada TAB: no se toca nada en esos procesos.
+  return argv[2] === "mcp" || argv[2] === "__complete";
 }
 
 function readCache(): UpdateCache | null {
